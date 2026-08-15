@@ -153,7 +153,7 @@
   <div class="inner-card">
     
     <div class="header">
-      <img id="companyLogo" src="https://via.placeholder.com/250x120?text=LOGO+EL+HAJJ" class="logo-img" alt="Logo El Hajj">
+      <img id="companyLogo" src="logo.jpeg" class="logo-img" alt="Logo El Hajj">
     </div>
 
     <!-- 1. LOGIN -->
@@ -246,7 +246,7 @@
 
       <!-- LAMPIRAN LAPORAN HASIL KERJA -->
       <div id="printableArea" class="printable-container">
-        <img id="watermarkLogo" src="https://via.placeholder.com/250x120?text=LOGO+EL+HAJJ" class="watermark-bg" alt="Watermark El Hajj">
+        <img id="watermarkLogo" src="logo.jpeg" class="watermark-bg" alt="Watermark El Hajj">
 
         <h3 style="color: var(--dark-blue); text-align: center; margin-top: 5px; position: relative; z-index: 2;">LAMPIRAN LAPORAN KEGIATAN CS & OB</h3>
         <p style="font-size: 11px; text-align: center; color: #555; margin-bottom: 15px; position: relative; z-index: 2;">Dokumen Resmi Operasional El Hajj</p>
@@ -279,6 +279,9 @@
 
   </div>
 </div>
+
+<!-- Input File Tersembunyi untuk Upload Logo Baru dari Galeri Admin -->
+<input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
 
 <!-- MODAL STATISTIK & GRAFIK PENILAIAN BULANAN -->
 <div id="statsModal" class="modal">
@@ -423,22 +426,44 @@
     document.getElementById('screenLogin').classList.add('active');
   }
 
+  // FUNGSI UPLOAD LOGO DARI GALERI & PERMANEN REFRESH
   function changeLogo() {
-    const url = prompt("Masukkan URL/Link Gambar Logo Baru (Kosongkan untuk Default):");
-    const logoToUse = url ? url : DEFAULT_LOGO;
-    localStorage.setItem('cs_logo', logoToUse);
-    applyLogo(logoToUse);
-    alert("Logo berhasil diperbarui.");
+    document.getElementById('logoFileInput').click();
+  }
+
+  function handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Image = e.target.result;
+      try {
+        localStorage.setItem('cs_logo', base64Image);
+        applyLogo(base64Image);
+        alert("Logo berhasil diperbarui dan tersimpan permanen!");
+      } catch (err) {
+        alert("Ukuran gambar logo terlalu besar! Silakan gunakan foto berukuran lebih kecil.");
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   function loadLogo() {
     const savedLogo = localStorage.getItem('cs_logo');
-    applyLogo(savedLogo ? savedLogo : DEFAULT_LOGO);
+    if (savedLogo) {
+      applyLogo(savedLogo);
+    } else {
+      applyLogo(DEFAULT_LOGO);
+    }
   }
 
-  function applyLogo(url) {
-    document.getElementById('companyLogo').src = url;
-    document.getElementById('watermarkLogo').src = url;
+  function applyLogo(urlOrBase64) {
+    const compLogo = document.getElementById('companyLogo');
+    const waterLogo = document.getElementById('watermarkLogo');
+    
+    if (compLogo) compLogo.src = urlOrBase64;
+    if (waterLogo) waterLogo.src = urlOrBase64;
   }
 
   function changeBackdrop() {
@@ -629,7 +654,6 @@
       return;
     }
 
-    // Cek duplikasi kode unik
     if (workers.some(w => w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
       alert("Kode Unik sudah digunakan oleh karyawan lain!");
       return;
