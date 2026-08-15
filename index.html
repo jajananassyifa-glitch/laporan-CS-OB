@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aplikasi Laporan CS & OB - El Hajj</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Library Chart.js untuk Grafik Interaktif -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -80,11 +79,9 @@
 
     .watermark-bg {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 75%;
-      max-width: 420px;
+      width: 75%; max-width: 420px;
       opacity: 0.15;
       pointer-events: none;
       z-index: 1;
@@ -96,16 +93,11 @@
     td { background-color: rgba(255, 255, 255, 0.8); }
     
     .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-    .video-preview { width: 120px; height: 70px; border-radius: 4px; background: #000; }
     .emp-photo { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid var(--primary-blue); }
     
     .badge-role {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: bold;
-      color: white;
+      display: inline-block; padding: 3px 8px;
+      border-radius: 12px; font-size: 11px; font-weight: bold; color: white;
     }
     .badge-cs { background-color: #27ae60; }
     .badge-ob { background-color: #e67e22; }
@@ -123,20 +115,8 @@
     .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 750px; position: relative; max-height: 85vh; overflow-y: auto; }
     .close-modal { position: absolute; top: 15px; right: 20px; color: #333; font-size: 28px; cursor: pointer; font-weight: bold; }
 
-    .chart-container-pie {
-      position: relative;
-      margin: 10px auto 20px auto;
-      height: 220px;
-      width: 100%;
-      max-width: 320px;
-    }
-    .chart-container-bar {
-      position: relative;
-      margin: 10px 0 25px 0;
-      height: 220px;
-      width: 100%;
-    }
-
+    .chart-container-pie { position: relative; margin: 10px auto 20px auto; height: 220px; width: 100%; max-width: 320px; }
+    .chart-container-bar { position: relative; margin: 10px 0 25px 0; height: 220px; width: 100%; }
     .notif-card { background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 350px; }
 
     @media print {
@@ -200,8 +180,8 @@
         </div>
 
         <div class="form-group">
-          <label>Video Bukti Hasil Kerja (After):</label>
-          <input type="file" id="videoAfter" accept="video/*" required>
+          <label>Foto Sesudah Pekerjaan (After):</label>
+          <input type="file" id="imgAfter" accept="image/*" required>
         </div>
 
         <button type="submit" id="btnSubmitReport">Kirim Laporan</button>
@@ -214,7 +194,6 @@
     <div id="screenAdminPanel" class="screen">
       <h2 style="color: var(--dark-blue); margin-top: 0;">Panel Pengaturan & Riwayat Admin</h2>
       
-      <!-- NAVIGASI DERETAN ATAS -->
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;" class="no-print">
         <button type="button" onclick="openStatsModal()" class="btn-admin btn-stats" style="flex: 1.2; font-size: 11px;">📊 Grafik & Statistik Penilaian</button>
         <button type="button" onclick="addWorker()" class="btn-admin" style="flex: 1; font-size: 11px;">+ Tambah Karyawan</button>
@@ -224,7 +203,6 @@
         <button type="button" onclick="changeBackdrop()" class="btn-admin" style="flex: 1; font-size: 11px;">Ubah Backdrop</button>
       </div>
 
-      <!-- TABEL DAFTAR KARYAWAN TERDAFTAR -->
       <div class="no-print" style="margin-bottom: 25px; background: #eaf2f8; padding: 15px; border-radius: 8px;">
         <h4 style="margin: 0 0 10px 0; color: var(--dark-blue);">Daftar Karyawan & Kode Unik Terdaftar:</h4>
         <div class="table-responsive" style="margin-top: 0;">
@@ -244,10 +222,8 @@
         </div>
       </div>
 
-      <!-- LAMPIRAN LAPORAN HASIL KERJA -->
       <div id="printableArea" class="printable-container">
         <img id="watermarkLogo" src="logo.jpeg" class="watermark-bg" alt="Watermark El Hajj">
-
         <h3 style="color: var(--dark-blue); text-align: center; margin-top: 5px; position: relative; z-index: 2;">LAMPIRAN LAPORAN KEGIATAN CS & OB</h3>
         <p style="font-size: 11px; text-align: center; color: #555; margin-bottom: 15px; position: relative; z-index: 2;">Dokumen Resmi Operasional El Hajj</p>
 
@@ -260,7 +236,7 @@
                 <th>Judul</th>
                 <th>Penjelasan</th>
                 <th>Foto Before</th>
-                <th>Video After</th>
+                <th>Foto After</th>
                 <th class="no-print">Aksi</th>
               </tr>
             </thead>
@@ -280,31 +256,20 @@
   </div>
 </div>
 
-<!-- Input File Tersembunyi untuk Upload Logo Baru dari Galeri Admin -->
 <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
 
-<!-- MODAL STATISTIK & GRAFIK PENILAIAN BULANAN -->
 <div id="statsModal" class="modal">
   <div class="modal-box">
     <span class="close-modal" onclick="closeModal('statsModal')">&times;</span>
     <h3 style="color: var(--dark-blue); margin-top:0;">📊 Grafik & Persentase Kinerja Bulanan</h3>
-    
     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
       <div style="flex: 1;">
         <label style="font-size: 12px;">Pilih Bulan:</label>
         <select id="filterMonth" onchange="calculateMonthlyStats()">
-          <option value="0">Januari</option>
-          <option value="1">Februari</option>
-          <option value="2">Maret</option>
-          <option value="3">April</option>
-          <option value="4">Mei</option>
-          <option value="5">Juni</option>
-          <option value="6">Juli</option>
-          <option value="7">Agustus</option>
-          <option value="8">September</option>
-          <option value="9">Oktober</option>
-          <option value="10">November</option>
-          <option value="11">Desember</option>
+          <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
+          <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+          <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
+          <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
         </select>
       </div>
       <div style="flex: 1;">
@@ -312,28 +277,14 @@
         <select id="filterYear" onchange="calculateMonthlyStats()"></select>
       </div>
     </div>
-
-    <!-- 1. DIAGRAM LINGKARAN (PIE CHART DI ATAS) -->
-    <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Proporsi Kontribusi (Diagram Lingkaran)</h5>
-    <div class="chart-container-pie">
-      <canvas id="pieChart"></canvas>
-    </div>
-
-    <!-- 2. GRAFIK BATANG (BAR CHART DI BAWAHNYA) -->
-    <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Jumlah Laporan Per-Karyawan (Grafik Batang)</h5>
-    <div class="chart-container-bar">
-      <canvas id="performanceChart"></canvas>
-    </div>
-
+    <div class="chart-container-pie"><canvas id="pieChart"></canvas></div>
+    <div class="chart-container-bar"><canvas id="performanceChart"></canvas></div>
     <div class="table-responsive">
       <table>
         <thead>
           <tr>
-            <th>Karyawan</th>
-            <th>Peran</th>
-            <th style="text-align: center;">Total Laporan</th>
-            <th>Persentase Kontribusi</th>
-            <th>Status</th>
+            <th>Karyawan</th><th>Peran</th><th style="text-align: center;">Total Laporan</th>
+            <th>Persentase Kontribusi</th><th>Status</th>
           </tr>
         </thead>
         <tbody id="statsTableBody"></tbody>
@@ -342,18 +293,16 @@
   </div>
 </div>
 
-<!-- Modal Zoom Media -->
 <div id="mediaModal" class="modal">
   <span class="close-modal" onclick="closeModal('mediaModal')" style="color:white; top:20px; right:30px;">&times;</span>
   <div id="mediaContainer"></div>
 </div>
 
-<!-- Modal Notifikasi -->
 <div id="notifModal" class="modal">
   <div class="notif-card">
     <div style="font-size: 45px; color: #27ae60;">✔</div>
     <h3 style="color: var(--dark-blue); margin: 5px 0;">Laporan Berhasil Terkirim!</h3>
-    <p style="color: #555; font-size: 13px;">Foto dan Video Bukti Kerja berhasil tersimpan di sistem Admin.</p>
+    <p style="color: #555; font-size: 13px;">Foto Bukti Sebelum & Sesudah Kerja berhasil tersimpan.</p>
     <button onclick="closeNotifAndLogout()" style="background-color: #27ae60;">Selesai</button>
   </div>
 </div>
@@ -362,63 +311,73 @@
   const DEFAULT_LOGO = "logo.jpeg";
   const ADMIN_PASSWORD = "adnin@1234#";
   const DELETE_PASSWORD = "delet@1234#"; 
-
-  // Palet warna cerah untuk Diagram Lingkaran
   const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
 
- // KODE BARU (Pasti memuat data karyawan di WebViewer HP):
-let defaultWorkers = [
-  { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
-  { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
-];
+  const defaultWorkers = [
+    { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
+    { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
+  ];
 
-// Ambil data dari penyimpan HP, jika kosong gunakan defaultWorkers
-let savedData = localStorage.getItem('cs_workers');
-let workers;
-
-try {
-  workers = (savedData && JSON.parse(savedData).length > 0) ? JSON.parse(savedData) : defaultWorkers;
-} catch(e) {
-  workers = defaultWorkers;
-}
-
-// Pastikan data tersimpan balik
-localStorage.setItem('cs_workers', JSON.stringify(workers));
-
-// Simpan otomatis data karyawan default ke HP jika baru pertama kali di-install
-if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
-  localStorage.setItem('cs_workers', JSON.stringify(defaultWorkers));
-}
-  let reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
+  let workers = [];
+  let reports = [];
   let myBarChart = null; 
   let myPieChart = null;
 
   window.onload = function() {
+    loadWorkers();
+    loadReports();
     loadLogo();
     loadBackdrop();
     renderWorkerSelect();
     setupYearFilter();
   };
 
-  // VERIFIKASI LOGIN DENGAN KODE UNIK DARI DATA KARYAWAN
+  function loadWorkers() {
+    try {
+      let saved = localStorage.getItem('cs_workers');
+      if (saved && JSON.parse(saved).length > 0) {
+        workers = JSON.parse(saved);
+      } else {
+        workers = defaultWorkers;
+        localStorage.setItem('cs_workers', JSON.stringify(workers));
+      }
+    } catch(e) {
+      workers = defaultWorkers;
+    }
+  }
+
+  function saveWorkers() {
+    try {
+      localStorage.setItem('cs_workers', JSON.stringify(workers));
+    } catch(e) {
+      alert("Gagal menyimpan data ke HP!");
+    }
+    renderWorkerSelect();
+    renderWorkerList();
+  }
+
+  function loadReports() {
+    try {
+      reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
+    } catch(e) {
+      reports = [];
+    }
+  }
+
   function loginWorker() {
     const inputCode = document.getElementById('uniqueCode').value.trim();
     if (!inputCode) {
       alert('Silakan masukkan Kode Unik terlebih dahulu!');
       return;
     }
-
-    // Ambil data terbaru dari localStorage
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    loadWorkers();
     const matchedWorker = workers.find(w => w.code && w.code.toLowerCase() === inputCode.toLowerCase());
 
     if (matchedWorker) {
       document.getElementById('screenLogin').classList.remove('active');
       document.getElementById('screenWorkerForm').classList.add('active');
       document.getElementById('uniqueCode').value = '';
-      
       renderWorkerSelect();
-      // Auto select karyawan sesuai kode unik yang dimasukkan
       document.getElementById('workerSelect').value = matchedWorker.name;
       updateWorkerPhoto();
     } else {
@@ -443,10 +402,7 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     document.getElementById('screenLogin').classList.add('active');
   }
 
-  // FUNGSI UPLOAD LOGO DARI GALERI & PERMANEN REFRESH
-  function changeLogo() {
-    document.getElementById('logoFileInput').click();
-  }
+  function changeLogo() { document.getElementById('logoFileInput').click(); }
 
   function handleLogoUpload(event) {
     const file = event.target.files[0];
@@ -458,9 +414,9 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
       try {
         localStorage.setItem('cs_logo', base64Image);
         applyLogo(base64Image);
-        alert("Logo berhasil diperbarui dan tersimpan permanen!");
+        alert("Logo berhasil diperbarui dan tersimpan!");
       } catch (err) {
-        alert("Ukuran gambar logo terlalu besar! Silakan gunakan foto berukuran lebih kecil.");
+        alert("Ukuran logo terlalu besar.");
       }
     };
     reader.readAsDataURL(file);
@@ -468,17 +424,12 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
 
   function loadLogo() {
     const savedLogo = localStorage.getItem('cs_logo');
-    if (savedLogo) {
-      applyLogo(savedLogo);
-    } else {
-      applyLogo(DEFAULT_LOGO);
-    }
+    applyLogo(savedLogo ? savedLogo : DEFAULT_LOGO);
   }
 
   function applyLogo(urlOrBase64) {
     const compLogo = document.getElementById('companyLogo');
     const waterLogo = document.getElementById('watermarkLogo');
-    
     if (compLogo) compLogo.src = urlOrBase64;
     if (waterLogo) waterLogo.src = urlOrBase64;
   }
@@ -488,7 +439,6 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     if (url) {
       localStorage.setItem('cs_backdrop', url);
       document.documentElement.style.setProperty('--bg-backdrop', `url('${url}')`);
-      alert("Backdrop berhasil diperbarui.");
     }
   }
 
@@ -499,148 +449,8 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     }
   }
 
-  // STATISTIK BULANAN
-  function setupYearFilter() {
-    const yearSelect = document.getElementById('filterYear');
-    const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = '';
-    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
-      let opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      if (y === currentYear) opt.selected = true;
-      yearSelect.appendChild(opt);
-    }
-    document.getElementById('filterMonth').value = new Date().getMonth();
-  }
-
-  function openStatsModal() {
-    document.getElementById('statsModal').style.display = 'flex';
-    calculateMonthlyStats();
-  }
-
-  function calculateMonthlyStats() {
-    const selectedMonth = parseInt(document.getElementById('filterMonth').value);
-    const selectedYear = parseInt(document.getElementById('filterYear').value);
-
-    let monthlyReports = reports.filter(r => {
-      let reportDate = new Date(r.timestamp || r.id);
-      return reportDate.getMonth() === selectedMonth && reportDate.getFullYear() === selectedYear;
-    });
-
-    let totalMonthlyReports = monthlyReports.length;
-
-    let counts = {};
-    workers.forEach(w => counts[w.name] = 0);
-
-    monthlyReports.forEach(r => {
-      workers.forEach(w => {
-        if (r.worker.startsWith(w.name)) {
-          counts[w.name] = (counts[w.name] || 0) + 1;
-        }
-      });
-    });
-
-    const tbody = document.getElementById('statsTableBody');
-    tbody.innerHTML = '';
-
-    let chartLabels = [];
-    let chartData = [];
-    let chartColors = [];
-
-    if (workers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data karyawan.</td></tr>';
-      return;
-    }
-
-    workers.forEach(w => {
-      let count = counts[w.name] || 0;
-      let percentage = totalMonthlyReports > 0 ? ((count / totalMonthlyReports) * 100).toFixed(1) : 0;
-      
-      let statusText = "Perlu Ditingkatkan";
-      let statusColor = "#e74c3c";
-      if (percentage >= 30) { statusText = "Sangat Rajin"; statusColor = "#27ae60"; }
-      else if (percentage >= 15) { statusText = "Cukup Rajin"; statusColor = "#f39c12"; }
-
-      chartLabels.push(`${w.name} (${w.role || 'CS'})`);
-      chartData.push(count);
-      chartColors.push(statusColor);
-
-      let tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${w.name}</strong></td>
-        <td><span class="badge-role ${w.role === 'OB' ? 'badge-ob' : 'badge-cs'}">${w.role || 'CS'}</span></td>
-        <td style="text-align: center;"><strong>${count}</strong> Laporan</td>
-        <td>
-          <div style="font-size:11px; margin-bottom:2px;">${percentage}%</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
-          </div>
-        </td>
-        <td><span style="color:${statusColor}; font-weight:bold; font-size:11px;">${statusText}</span></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    renderCharts(chartLabels, chartData, chartColors);
-  }
-
-  function renderCharts(labels, data, barColors) {
-    const ctxPie = document.getElementById('pieChart').getContext('2d');
-    if (myPieChart) myPieChart.destroy();
-
-    myPieChart = new Chart(ctxPie, {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: PIE_COLORS.slice(0, labels.length)
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 10 } } }
-        }
-      }
-    });
-
-    const ctxBar = document.getElementById('performanceChart').getContext('2d');
-    if (myBarChart) myBarChart.destroy();
-
-    myBarChart = new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Jumlah Laporan Terkirim',
-          data: data,
-          backgroundColor: barColors,
-          borderRadius: 6,
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1, precision: 0 }
-          }
-        }
-      }
-    });
-  }
-
-  // MANAJEMEN DAFTAR KARYAWAN & KODE UNIK
   function renderWorkerList() {
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    loadWorkers();
     const tbody = document.getElementById('registeredWorkersBody');
     tbody.innerHTML = '';
     workers.forEach((w, i) => {
@@ -666,10 +476,7 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     if (!name) return;
 
     let code = prompt("Masukkan Kode Unik untuk " + name + " (Contoh: CS001):");
-    if (!code) {
-      alert("Kode unik wajib diisi!");
-      return;
-    }
+    if (!code) { alert("Kode unik wajib diisi!"); return; }
 
     if (workers.some(w => w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
       alert("Kode Unik sudah digunakan oleh karyawan lain!");
@@ -677,14 +484,12 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     }
 
     let roleInput = prompt("Masukkan Penggolongan Tugas Pekerja (Ketik CS atau OB):", "CS");
-    let role = "CS";
-    if (roleInput && roleInput.toUpperCase() === "OB") role = "OB";
-
+    let role = (roleInput && roleInput.toUpperCase() === "OB") ? "OB" : "CS";
     const photo = prompt("Masukkan URL Foto Karyawan (Opsional):") || "https://via.placeholder.com/50";
     
-    workers.push({ name: name, photo: photo, role: role, code: code.trim() });
+    workers.push({ name: name.trim(), photo: photo, role: role, code: code.trim() });
     saveWorkers();
-    alert("Karyawan " + name + " berhasil ditambahkan dengan Kode Unik: " + code);
+    alert("Karyawan " + name + " berhasil ditambahkan & tersimpan!");
   }
 
   function changeEmployeeCode() {
@@ -696,12 +501,12 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
       const newCode = prompt("Masukkan Kode Unik Baru untuk " + worker.name + ":", worker.code || "");
       if (newCode) {
         if (workers.some(w => w.name !== worker.name && w.code && w.code.toLowerCase() === newCode.trim().toLowerCase())) {
-          alert("Kode Unik tersebut sudah dipakai oleh karyawan lain!");
+          alert("Kode Unik tersebut sudah dipakai!");
           return;
         }
         worker.code = newCode.trim();
         saveWorkers();
-        alert("Kode Unik karyawan " + worker.name + " berhasil diperbarui!");
+        alert("Kode Unik berhasil diperbarui!");
       }
     } else {
       alert("Karyawan tidak ditemukan.");
@@ -731,14 +536,8 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     }
   }
 
-  function saveWorkers() {
-    localStorage.setItem('cs_workers', JSON.stringify(workers));
-    renderWorkerSelect();
-    renderWorkerList();
-  }
-
   function renderWorkerSelect() {
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    loadWorkers();
     const select = document.getElementById('workerSelect');
     select.innerHTML = '';
     workers.forEach((w) => {
@@ -758,12 +557,12 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     if (worker) document.getElementById('workerPhoto').src = worker.photo;
   }
 
-  // SUBMIT LAPORAN
+  // SUBMIT LAPORAN (FOTO BEFORE & FOTO AFTER)
   document.getElementById('reportForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const submitBtn = document.getElementById('btnSubmitReport');
-    submitBtn.innerText = "Mengirim Video & Foto...";
+    submitBtn.innerText = "Mengirim Foto Laporan...";
     submitBtn.disabled = true;
 
     const selectedName = document.getElementById('workerSelect').value;
@@ -773,12 +572,12 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     const title = document.getElementById('jobTitle').value;
     const desc = document.getElementById('jobDesc').value;
     const fileBefore = document.getElementById('imgBefore').files[0];
-    const fileVideo = document.getElementById('videoAfter').files[0];
+    const fileAfter = document.getElementById('imgAfter').files[0];
 
-    const readerImg = new FileReader();
-    readerImg.onload = function(e1) {
-      const readerVid = new FileReader();
-      readerVid.onload = function(e2) {
+    const readerBefore = new FileReader();
+    readerBefore.onload = function(e1) {
+      const readerAfter = new FileReader();
+      readerAfter.onload = function(e2) {
         const newReport = {
           id: Date.now(),
           timestamp: new Date().toISOString(),
@@ -787,7 +586,7 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
           title: title,
           desc: desc,
           before: e1.target.result,
-          videoAfter: e2.target.result
+          after: e2.target.result
         };
 
         try {
@@ -796,15 +595,15 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
           document.getElementById('reportForm').reset();
           document.getElementById('notifModal').style.display = "flex";
         } catch (err) {
-          alert("Ukuran video terlalu besar. Gunakan durasi yang lebih pendek.");
+          alert("Ukuran foto terlalu besar. Silakan gunakan foto yang lebih kecil.");
         }
         
         submitBtn.innerText = "Kirim Laporan";
         submitBtn.disabled = false;
       };
-      readerVid.readAsDataURL(fileVideo);
+      readerAfter.readAsDataURL(fileAfter);
     };
-    readerImg.readAsDataURL(fileBefore);
+    readerBefore.readAsDataURL(fileBefore);
   });
 
   function closeNotifAndLogout() {
@@ -813,9 +612,9 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
   }
 
   function renderReports() {
+    loadReports();
     const tbody = document.getElementById('reportTableBody');
     tbody.innerHTML = '';
-    reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
 
     if (reports.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada laporan.</td></tr>';
@@ -829,12 +628,8 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
         <td>${r.worker}</td>
         <td>${r.title}</td>
         <td>${r.desc}</td>
-        <td><img src="${r.before}" class="img-preview" onclick="viewMedia('img', '${r.before}')"></td>
-        <td>
-          <video class="video-preview" onclick="viewMedia('video', '${r.videoAfter}')">
-            <source src="${r.videoAfter}">
-          </video>
-        </td>
+        <td><img src="${r.before}" class="img-preview" onclick="viewMedia('${r.before}')"></td>
+        <td><img src="${r.after}" class="img-preview" onclick="viewMedia('${r.after}')"></td>
         <td class="no-print"><button class="btn-delete" onclick="deleteReport(${index})">Hapus</button></td>
       `;
       tbody.appendChild(tr);
@@ -851,16 +646,10 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     }
   }
 
-  function viewMedia(type, src) {
+  function viewMedia(src) {
     const modal = document.getElementById('mediaModal');
     const container = document.getElementById('mediaContainer');
-    container.innerHTML = '';
-
-    if (type === 'img') {
-      container.innerHTML = `<img src="${src}" class="modal-content">`;
-    } else {
-      container.innerHTML = `<video controls autoplay class="modal-content"><source src="${src}"></video>`;
-    }
+    container.innerHTML = `<img src="${src}" class="modal-content">`;
     modal.style.display = "flex";
   }
 
@@ -872,6 +661,104 @@ if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan CS & OB");
     XLSX.writeFile(wb, "Laporan_Kebersihan_ElHajj.xlsx");
+  }
+
+  function setupYearFilter() {
+    const yearSelect = document.getElementById('filterYear');
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+      let opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+    document.getElementById('filterMonth').value = new Date().getMonth();
+  }
+
+  function openStatsModal() {
+    document.getElementById('statsModal').style.display = 'flex';
+    calculateMonthlyStats();
+  }
+
+  function calculateMonthlyStats() {
+    const selectedMonth = parseInt(document.getElementById('filterMonth').value);
+    const selectedYear = parseInt(document.getElementById('filterYear').value);
+
+    let monthlyReports = reports.filter(r => {
+      let reportDate = new Date(r.timestamp || r.id);
+      return reportDate.getMonth() === selectedMonth && reportDate.getFullYear() === selectedYear;
+    });
+
+    let totalMonthlyReports = monthlyReports.length;
+    let counts = {};
+    workers.forEach(w => counts[w.name] = 0);
+
+    monthlyReports.forEach(r => {
+      workers.forEach(w => {
+        if (r.worker.startsWith(w.name)) {
+          counts[w.name] = (counts[w.name] || 0) + 1;
+        }
+      });
+    });
+
+    const tbody = document.getElementById('statsTableBody');
+    tbody.innerHTML = '';
+
+    let chartLabels = [];
+    let chartData = [];
+    let chartColors = [];
+
+    if (workers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data karyawan.</td></tr>';
+      return;
+    }
+
+    workers.forEach(w => {
+      let count = counts[w.name] || 0;
+      let percentage = totalMonthlyReports > 0 ? ((count / totalMonthlyReports) * 100).toFixed(1) : 0;
+      let statusText = "Perlu Ditingkatkan";
+      let statusColor = "#e74c3c";
+      if (percentage >= 30) { statusText = "Sangat Rajin"; statusColor = "#27ae60"; }
+      else if (percentage >= 15) { statusText = "Cukup Rajin"; statusColor = "#f39c12"; }
+
+      chartLabels.push(`${w.name} (${w.role || 'CS'})`);
+      chartData.push(count);
+      chartColors.push(statusColor);
+
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${w.name}</strong></td>
+        <td><span class="badge-role ${w.role === 'OB' ? 'badge-ob' : 'badge-cs'}">${w.role || 'CS'}</span></td>
+        <td style="text-align: center;"><strong>${count}</strong> Laporan</td>
+        <td>
+          <div style="font-size:11px; margin-bottom:2px;">${percentage}%</div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${percentage}%;"></div></div>
+        </td>
+        <td><span style="color:${statusColor}; font-weight:bold; font-size:11px;">${statusText}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    renderCharts(chartLabels, chartData, chartColors);
+  }
+
+  function renderCharts(labels, data, barColors) {
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    if (myPieChart) myPieChart.destroy();
+    myPieChart = new Chart(ctxPie, {
+      type: 'pie',
+      data: { labels: labels, datasets: [{ data: data, backgroundColor: PIE_COLORS.slice(0, labels.length) }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+    });
+
+    const ctxBar = document.getElementById('performanceChart').getContext('2d');
+    if (myBarChart) myBarChart.destroy();
+    myBarChart = new Chart(ctxBar, {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label: 'Jumlah Laporan Terkirim', data: data, backgroundColor: barColors, borderRadius: 6, borderWidth: 1 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } } }
+    });
   }
 </script>
 </body>
