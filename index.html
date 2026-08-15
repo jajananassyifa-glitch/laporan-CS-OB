@@ -371,7 +371,16 @@
     { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
   ];
 
-  let workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+ // KODE BARU (Otomatis simpan data default jika penyimpanan HP kosong):
+let savedWorkers = localStorage.getItem('cs_workers');
+let workers = (savedWorkers && JSON.parse(savedWorkers).length > 0) 
+  ? JSON.parse(savedWorkers) 
+  : defaultWorkers;
+
+// Simpan otomatis data karyawan default ke HP jika baru pertama kali di-install
+if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
+  localStorage.setItem('cs_workers', JSON.stringify(defaultWorkers));
+}
   let reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
   let myBarChart = null; 
   let myPieChart = null;
