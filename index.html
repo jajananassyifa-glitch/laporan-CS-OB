@@ -366,16 +366,24 @@
   // Palet warna cerah untuk Diagram Lingkaran
   const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
 
-  let defaultWorkers = [
-    { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
-    { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
-  ];
+ // KODE BARU (Pasti memuat data karyawan di WebViewer HP):
+let defaultWorkers = [
+  { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
+  { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
+];
 
- // KODE BARU (Otomatis simpan data default jika penyimpanan HP kosong):
-let savedWorkers = localStorage.getItem('cs_workers');
-let workers = (savedWorkers && JSON.parse(savedWorkers).length > 0) 
-  ? JSON.parse(savedWorkers) 
-  : defaultWorkers;
+// Ambil data dari penyimpan HP, jika kosong gunakan defaultWorkers
+let savedData = localStorage.getItem('cs_workers');
+let workers;
+
+try {
+  workers = (savedData && JSON.parse(savedData).length > 0) ? JSON.parse(savedData) : defaultWorkers;
+} catch(e) {
+  workers = defaultWorkers;
+}
+
+// Pastikan data tersimpan balik
+localStorage.setItem('cs_workers', JSON.stringify(workers));
 
 // Simpan otomatis data karyawan default ke HP jika baru pertama kali di-install
 if (!savedWorkers || JSON.parse(savedWorkers).length === 0) {
