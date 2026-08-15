@@ -164,7 +164,7 @@
       </div>
       <div class="form-group">
         <label>Masukkan Kode Unik Pekerja:</label>
-       <input type="file" id="photoInput" accept="image/*" capture="environment" required />
+        <input type="password" id="uniqueCode" placeholder="Masukkan kode unik (Contoh: CS123)">
       </div>
       <button onclick="loginWorker()">Masuk & Kirim Laporan</button>
       <hr style="margin: 25px 0; border: 0; border-top: 1px solid #aed6f1;">
@@ -218,6 +218,7 @@
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;" class="no-print">
         <button type="button" onclick="openStatsModal()" class="btn-admin btn-stats" style="flex: 1.2; font-size: 11px;">📊 Grafik & Statistik Penilaian</button>
         <button type="button" onclick="addWorker()" class="btn-admin" style="flex: 1; font-size: 11px;">+ Tambah Karyawan</button>
+        <button type="button" onclick="changeEmployeeCode()" class="btn-admin" style="flex: 1; font-size: 11px;">Atur Kode Karyawan</button>
         <button type="button" onclick="changeEmployeePhoto()" class="btn-admin" style="flex: 1; font-size: 11px;">Atur Foto Karyawan</button>
         <button type="button" onclick="changeLogo()" class="btn-admin" style="flex: 1; font-size: 11px;">Ubah Logo</button>
         <button type="button" onclick="changeBackdrop()" class="btn-admin" style="flex: 1; font-size: 11px;">Ubah Backdrop</button>
@@ -225,7 +226,7 @@
 
       <!-- TABEL DAFTAR KARYAWAN TERDAFTAR -->
       <div class="no-print" style="margin-bottom: 25px; background: #eaf2f8; padding: 15px; border-radius: 8px;">
-        <h4 style="margin: 0 0 10px 0; color: var(--dark-blue);">Daftar Nama Karyawan Terdaftar:</h4>
+        <h4 style="margin: 0 0 10px 0; color: var(--dark-blue);">Daftar Karyawan & Kode Unik Terdaftar:</h4>
         <div class="table-responsive" style="margin-top: 0;">
           <table>
             <thead>
@@ -233,6 +234,7 @@
                 <th style="width: 30px;">No</th>
                 <th style="width: 50px;">Foto</th>
                 <th>Nama Karyawan</th>
+                <th style="width: 100px;">Kode Unik</th>
                 <th style="width: 90px;">Keterangan</th>
                 <th style="width: 80px; text-align: center;">Aksi</th>
               </tr>
@@ -354,18 +356,19 @@
 </div>
 
 <script>
-  const DEFAULT_LOGO = "logo.jpeg";
-  const WORKER_CODE = "CS123";
+  const DEFAULT_LOGO = "https://via.placeholder.com/250x120?text=LOGO+EL+HAJJ";
   const ADMIN_PASSWORD = "adnin@1234#";
   const DELETE_PASSWORD = "delet@1234#"; 
 
   // Palet warna cerah untuk Diagram Lingkaran
   const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
 
-  let workers = JSON.parse(localStorage.getItem('cs_workers')) || [
-    { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS" },
-    { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB" }
+  let defaultWorkers = [
+    { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
+    { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
   ];
+
+  let workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
   let reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
   let myBarChart = null; 
   let myPieChart = null;
@@ -377,13 +380,29 @@
     setupYearFilter();
   };
 
+  // VERIFIKASI LOGIN DENGAN KODE UNIK DARI DATA KARYAWAN
   function loginWorker() {
-    if (document.getElementById('uniqueCode').value === WORKER_CODE) {
+    const inputCode = document.getElementById('uniqueCode').value.trim();
+    if (!inputCode) {
+      alert('Silakan masukkan Kode Unik terlebih dahulu!');
+      return;
+    }
+
+    // Ambil data terbaru dari localStorage
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    const matchedWorker = workers.find(w => w.code && w.code.toLowerCase() === inputCode.toLowerCase());
+
+    if (matchedWorker) {
       document.getElementById('screenLogin').classList.remove('active');
       document.getElementById('screenWorkerForm').classList.add('active');
       document.getElementById('uniqueCode').value = '';
+      
+      renderWorkerSelect();
+      // Auto select karyawan sesuai kode unik yang dimasukkan
+      document.getElementById('workerSelect').value = matchedWorker.name;
+      updateWorkerPhoto();
     } else {
-      alert('Kode Unik Pekerja Salah!');
+      alert('Kode Unik Pekerja Salah atau Tidak Terdaftar!');
     }
   }
 
@@ -521,12 +540,10 @@
       tbody.appendChild(tr);
     });
 
-    // RENDER KEDUA GRAFIK
     renderCharts(chartLabels, chartData, chartColors);
   }
 
   function renderCharts(labels, data, barColors) {
-    // 1. DIAGRAM LINGKARAN (PIE CHART)
     const ctxPie = document.getElementById('pieChart').getContext('2d');
     if (myPieChart) myPieChart.destroy();
 
@@ -548,7 +565,6 @@
       }
     });
 
-    // 2. GRAFIK BATANG (BAR CHART)
     const ctxBar = document.getElementById('performanceChart').getContext('2d');
     if (myBarChart) myBarChart.destroy();
 
@@ -580,8 +596,9 @@
     });
   }
 
-  // MANAJEMEN DAFTAR KARYAWAN
+  // MANAJEMEN DAFTAR KARYAWAN & KODE UNIK
   function renderWorkerList() {
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const tbody = document.getElementById('registeredWorkersBody');
     tbody.innerHTML = '';
     workers.forEach((w, i) => {
@@ -594,6 +611,7 @@
         <td>${i + 1}</td>
         <td><img src="${w.photo}" class="emp-photo" style="width:30px;height:30px;"></td>
         <td><strong>${w.name}</strong></td>
+        <td><code>${w.code || '-'}</code></td>
         <td>${roleBadge}</td>
         <td style="text-align: center;"><button class="btn-delete" onclick="deleteWorkerDirect(${i})">Hapus</button></td>
       `;
@@ -603,14 +621,49 @@
 
   function addWorker() {
     const name = prompt("Masukkan Nama Karyawan Baru:");
-    if (name) {
-      let roleInput = prompt("Masukkan Penggolongan Tugas Pekerja (Ketik CS atau OB):", "CS");
-      let role = "CS";
-      if (roleInput && roleInput.toUpperCase() === "OB") role = "OB";
+    if (!name) return;
 
-      const photo = prompt("Masukkan URL Foto Karyawan (Opsional):") || "https://via.placeholder.com/50";
-      workers.push({ name: name, photo: photo, role: role });
-      saveWorkers();
+    let code = prompt("Masukkan Kode Unik untuk " + name + " (Contoh: CS001):");
+    if (!code) {
+      alert("Kode unik wajib diisi!");
+      return;
+    }
+
+    // Cek duplikasi kode unik
+    if (workers.some(w => w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
+      alert("Kode Unik sudah digunakan oleh karyawan lain!");
+      return;
+    }
+
+    let roleInput = prompt("Masukkan Penggolongan Tugas Pekerja (Ketik CS atau OB):", "CS");
+    let role = "CS";
+    if (roleInput && roleInput.toUpperCase() === "OB") role = "OB";
+
+    const photo = prompt("Masukkan URL Foto Karyawan (Opsional):") || "https://via.placeholder.com/50";
+    
+    workers.push({ name: name, photo: photo, role: role, code: code.trim() });
+    saveWorkers();
+    alert("Karyawan " + name + " berhasil ditambahkan dengan Kode Unik: " + code);
+  }
+
+  function changeEmployeeCode() {
+    const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Kode Uniknya:");
+    if (!name) return;
+    
+    const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
+    if (worker) {
+      const newCode = prompt("Masukkan Kode Unik Baru untuk " + worker.name + ":", worker.code || "");
+      if (newCode) {
+        if (workers.some(w => w.name !== worker.name && w.code && w.code.toLowerCase() === newCode.trim().toLowerCase())) {
+          alert("Kode Unik tersebut sudah dipakai oleh karyawan lain!");
+          return;
+        }
+        worker.code = newCode.trim();
+        saveWorkers();
+        alert("Kode Unik karyawan " + worker.name + " berhasil diperbarui!");
+      }
+    } else {
+      alert("Karyawan tidak ditemukan.");
     }
   }
 
@@ -626,6 +679,8 @@
 
   function changeEmployeePhoto() {
     const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Fotonya:");
+    if (!name) return;
+
     const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
     if (worker) {
       const url = prompt("Masukkan URL Foto Baru:");
@@ -642,6 +697,7 @@
   }
 
   function renderWorkerSelect() {
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const select = document.getElementById('workerSelect');
     select.innerHTML = '';
     workers.forEach((w) => {
