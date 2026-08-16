@@ -96,7 +96,6 @@
     td { background-color: rgba(255, 255, 255, 0.8); }
     
     .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-    .video-preview { width: 120px; height: 70px; border-radius: 4px; background: #000; }
     .emp-photo { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid var(--primary-blue); }
     
     .badge-role {
@@ -200,8 +199,8 @@
         </div>
 
         <div class="form-group">
-          <label>Video Bukti Hasil Kerja (After):</label>
-          <input type="file" id="videoAfter" accept="video/*" required>
+          <label>Foto Hasil Kerja (After):</label>
+          <input type="file" id="imgAfter" accept="image/*" required>
         </div>
 
         <button type="submit" id="btnSubmitReport">Kirim Laporan</button>
@@ -260,7 +259,7 @@
                 <th>Judul</th>
                 <th>Penjelasan</th>
                 <th>Foto Before</th>
-                <th>Video After</th>
+                <th>Foto After</th>
                 <th class="no-print">Aksi</th>
               </tr>
             </thead>
@@ -353,7 +352,7 @@
   <div class="notif-card">
     <div style="font-size: 45px; color: #27ae60;">✔</div>
     <h3 style="color: var(--dark-blue); margin: 5px 0;">Laporan Berhasil Terkirim!</h3>
-    <p style="color: #555; font-size: 13px;">Foto dan Video Bukti Kerja berhasil tersimpan di sistem Admin.</p>
+    <p style="color: #555; font-size: 13px;">Foto Bukti Kerja Before & After berhasil tersimpan di sistem Admin.</p>
     <button onclick="closeNotifAndLogout()" style="background-color: #27ae60;">Selesai</button>
   </div>
 </div>
@@ -363,7 +362,6 @@
   const ADMIN_PASSWORD = "adnin@1234#";
   const DELETE_PASSWORD = "delet@1234#"; 
 
-  // Palet warna cerah untuk Diagram Lingkaran
   const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
 
   let defaultWorkers = [
@@ -383,7 +381,6 @@
     setupYearFilter();
   };
 
-  // VERIFIKASI LOGIN DENGAN KODE UNIK DARI DATA KARYAWAN
   function loginWorker() {
     const inputCode = document.getElementById('uniqueCode').value.trim();
     if (!inputCode) {
@@ -391,7 +388,6 @@
       return;
     }
 
-    // Ambil data terbaru dari localStorage
     workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const matchedWorker = workers.find(w => w.code && w.code.toLowerCase() === inputCode.toLowerCase());
 
@@ -401,7 +397,6 @@
       document.getElementById('uniqueCode').value = '';
       
       renderWorkerSelect();
-      // Auto select karyawan sesuai kode unik yang dimasukkan
       document.getElementById('workerSelect').value = matchedWorker.name;
       updateWorkerPhoto();
     } else {
@@ -426,7 +421,6 @@
     document.getElementById('screenLogin').classList.add('active');
   }
 
-  // FUNGSI UPLOAD LOGO DARI GALERI & PERMANEN REFRESH
   function changeLogo() {
     document.getElementById('logoFileInput').click();
   }
@@ -482,7 +476,6 @@
     }
   }
 
-  // STATISTIK BULANAN
   function setupYearFilter() {
     const yearSelect = document.getElementById('filterYear');
     const currentYear = new Date().getFullYear();
@@ -621,7 +614,6 @@
     });
   }
 
-  // MANAJEMEN DAFTAR KARYAWAN & KODE UNIK
   function renderWorkerList() {
     workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const tbody = document.getElementById('registeredWorkersBody');
@@ -746,7 +738,7 @@
     e.preventDefault();
     
     const submitBtn = document.getElementById('btnSubmitReport');
-    submitBtn.innerText = "Mengirim Video & Foto...";
+    submitBtn.innerText = "Mengirim Foto...";
     submitBtn.disabled = true;
 
     const selectedName = document.getElementById('workerSelect').value;
@@ -756,12 +748,12 @@
     const title = document.getElementById('jobTitle').value;
     const desc = document.getElementById('jobDesc').value;
     const fileBefore = document.getElementById('imgBefore').files[0];
-    const fileVideo = document.getElementById('videoAfter').files[0];
+    const fileAfter = document.getElementById('imgAfter').files[0];
 
-    const readerImg = new FileReader();
-    readerImg.onload = function(e1) {
-      const readerVid = new FileReader();
-      readerVid.onload = function(e2) {
+    const readerBefore = new FileReader();
+    readerBefore.onload = function(e1) {
+      const readerAfter = new FileReader();
+      readerAfter.onload = function(e2) {
         const newReport = {
           id: Date.now(),
           timestamp: new Date().toISOString(),
@@ -770,7 +762,7 @@
           title: title,
           desc: desc,
           before: e1.target.result,
-          videoAfter: e2.target.result
+          after: e2.target.result
         };
 
         try {
@@ -779,15 +771,15 @@
           document.getElementById('reportForm').reset();
           document.getElementById('notifModal').style.display = "flex";
         } catch (err) {
-          
+          alert("Ukuran gambar terlalu besar! Silakan gunakan gambar yang lebih kecil.");
         }
         
         submitBtn.innerText = "Kirim Laporan";
         submitBtn.disabled = false;
       };
-      readerVid.readAsDataURL(fileVideo);
+      readerAfter.readAsDataURL(fileAfter);
     };
-    readerImg.readAsDataURL(fileBefore);
+    readerBefore.readAsDataURL(fileBefore);
   });
 
   function closeNotifAndLogout() {
@@ -807,17 +799,14 @@
 
     reports.forEach((r, index) => {
       let tr = document.createElement('tr');
+      let afterSrc = r.after || r.videoAfter || r.imgAfter || '';
       tr.innerHTML = `
         <td>${r.date}</td>
         <td>${r.worker}</td>
         <td>${r.title}</td>
         <td>${r.desc}</td>
         <td><img src="${r.before}" class="img-preview" onclick="viewMedia('img', '${r.before}')"></td>
-        <td>
-          <video class="img-preview" onclick="viewMedia('img', '${r.After}')">
-            <source src="${r.imgAfter}">
-          </img>
-        </td>
+        <td><img src="${afterSrc}" class="img-preview" onclick="viewMedia('img', '${afterSrc}')"></td>
         <td class="no-print"><button class="btn-delete" onclick="deleteReport(${index})">Hapus</button></td>
       `;
       tbody.appendChild(tr);
