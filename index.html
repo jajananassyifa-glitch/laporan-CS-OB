@@ -40,7 +40,7 @@
     .header-arabic { font-size: 26px; font-family: 'Amiri', 'Traditional Arabic', serif; color: #0d47a1; margin: 10px 0; }
     .sub-title { font-style: italic; color: #555; margin-bottom: 20px; }
     .card { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-left: 5px solid #1976d2; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px 0; }
+    .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px 2px; }
     .btn-primary { background-color: #1976d2; color: white; }
     .btn-primary:hover { background-color: #1565c0; }
     .btn-admin { background-color: #0d47a1; color: white; }
@@ -51,7 +51,7 @@
     .btn-success:hover { background-color: #1b5e20; }
     .btn-secondary { background-color: #616161; color: white; }
     .btn-secondary:hover { background-color: #424242; }
-    input[type="password"], input[type="text"] { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; margin-bottom: 10px; }
+    input[type="password"], input[type="text"], input[type="number"], input[type="time"] { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; margin-bottom: 10px; }
     .webcam-box { width: 100%; max-width: 380px; height: 280px; background-color: #111; border-radius: 8px; margin: 15px auto; display: flex; justify-content: center; align-items: center; color: #fff; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: cover; }
     .charts-wrapper { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-around; margin-top: 15px; }
@@ -63,6 +63,7 @@
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
     .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
     .live-clock { background: #0d47a1; color: #ffffff; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 15px; font-size: 14px; }
+    .info-jam { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 6px; font-size: 13px; color: #0d47a1; margin-bottom: 15px; text-align: center; }
   </style>
 </head>
 <body id="app-backdrop">
@@ -115,14 +116,20 @@
       </div>
 
       <div class="card" id="sec-absen" style="display: none;">
-        <h3 style="color: #0d47a1;">Pemindaian Verifikasi Wajah & Lokasi</h3>
+        <h3 style="color: #0d47a1;">Pemindaian Verifikasi Wajah & Lokasi GPS</h3>
         <p>Karyawan Teridentifikasi: <strong id="labelNamaKaryawan">-</strong></p>
         
+        <div class="info-jam">
+          📌 <strong>Ketentuan Waktu Presensi Hari Ini:</strong><br>
+          • Batas Maksimal Absen Masuk: <strong id="lblJamMasuk">07:30</strong><br>
+          • Batas Minimal Absen Pulang: <strong id="lblJamPulang">16:00</strong>
+        </div>
+
         <div class="webcam-box">
           <video id="webcamKaryawan" autoplay muted playsinline></video>
         </div>
 
-        <button class="btn btn-success" id="btnProsesAbsen" onclick="prosesAbsen()">Verifikasi Wajah & Absen Masuk</button>
+        <button class="btn btn-success" id="btnProsesAbsen" onclick="prosesAbsen()">📸 Verifikasi Wajah & Absen</button>
         <div id="infoLokasi" class="status-text" style="margin-top: 10px;"></div>
       </div>
     </div>
@@ -133,8 +140,32 @@
         <h2 style="color: #0d47a1; margin-top: 0;">Panel Kontrol Dasbor Admin</h2>
         
         <div style="margin-bottom: 20px;">
-          <h4>Pengaturan Tampilan:</h4>
+          <h4>Pengaturan Tampilan & Aturan Operasional:</h4>
           <button class="btn btn-secondary" onclick="ubahLogo()">Ganti Logo Permanen (Password: logo@1234#)</button>
+          
+          <!-- Form Setting Jam Kerja Admin -->
+          <div style="margin-top: 15px; background: #e3f2fd; padding: 15px; border-radius: 8px;">
+            <h5 style="margin-top: 0; color: #0d47a1;">⏰ Pengaturan Jam Kerja (Password: jam@1234#)</h5>
+            <label style="font-size:12px; font-weight:bold;">Batas Maksimal Jam Masuk:</label><br>
+            <input type="time" id="cfgJamMasuk" value="07:30"><br>
+            <label style="font-size:12px; font-weight:bold;">Batas Minimal Jam Pulang:</label><br>
+            <input type="time" id="cfgJamPulang" value="16:00"><br>
+            <button class="btn btn-primary" onclick="simpanPengaturanJam()">Simpan Pengaturan Jam Kerja</button>
+          </div>
+
+          <!-- Form Setting Zona GPS Kantor -->
+          <div style="margin-top: 15px; background: #eef3f8; padding: 15px; border-radius: 8px;">
+            <h5 style="margin-top: 0; color: #0d47a1;">📍 Pengaturan Batas Lokasi (Geofence Kantor)</h5>
+            <p style="margin: 5px 0 10px 0; font-size: 13px;">Karyawan hanya bisa absen jika berada dalam radius ini.</p>
+            <label style="font-size:12px;">Latitude Kantor:</label><br>
+            <input type="text" id="cfgLat" placeholder="-6.175392"><br>
+            <label style="font-size:12px;">Longitude Kantor:</label><br>
+            <input type="text" id="cfgLng" placeholder="106.827153"><br>
+            <label style="font-size:12px;">Radius Maksimum (Meter):</label><br>
+            <input type="number" id="cfgRadius" placeholder="100"><br>
+            <button class="btn btn-primary" onclick="simpanPengaturanZona()">Simpan Zona Kantor</button>
+            <button class="btn btn-secondary" onclick="setLokasiSaatIni()">Gunakan GPS Saya Saat Ini</button>
+          </div>
         </div>
 
         <hr>
@@ -159,9 +190,9 @@
 
         <hr>
 
-        <!-- Tabel Karyawan & Terakhir Absen -->
+        <!-- Tabel Karyawan -->
         <div style="margin-bottom: 20px;">
-          <h4>Daftar Nama Karyawan Terdaftar & Waktu Absen Terakhir</h4>
+          <h4>Daftar Nama Karyawan Terdaftar & Status Absen</h4>
           <div style="overflow-x: auto;">
             <table>
               <thead>
@@ -171,8 +202,9 @@
                   <th>NIK</th>
                   <th>Jabatan</th>
                   <th>Kode Unik</th>
+                  <th>Jam Masuk Terakhir</th>
+                  <th>Jam Pulang Terakhir</th>
                   <th>Total Hadir</th>
-                  <th>Tanggal, Bulan, Tahun & Jam Absen</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -185,16 +217,18 @@
 
         <!-- Riwayat Log Presensi Realtime -->
         <div style="margin-bottom: 20px;">
-          <h4>📋 Riwayat Log Presensi Masuk (Real-time Firebase)</h4>
+          <h4>📋 Riwayat Log Presensi Real-time (Masuk & Pulang)</h4>
           <div style="overflow-x: auto;">
             <table>
               <thead>
                 <tr>
                   <th>No</th>
+                  <th>Tipe Presensi</th>
                   <th>Tanggal, Bulan, Tahun & Jam</th>
                   <th>Nama Karyawan</th>
                   <th>Jabatan</th>
-                  <th>Lokasi GPS (Lat, Long)</th>
+                  <th>Jarak ke Kantor</th>
+                  <th>Lokasi GPS</th>
                 </tr>
               </thead>
               <tbody id="tabelLogAbsen"></tbody>
@@ -252,7 +286,27 @@
     let currentStream = null;
     let isAiLoaded = false;
 
-    // Fungsi Jam & Tanggal Realtime
+    // Default Jam Kerja & Geofence
+    let configApp = {
+      jamMasukMax: "07:30",
+      jamPulangMin: "16:00",
+      lat: 0,
+      lng: 0,
+      radius: 100
+    };
+
+    function hitungJarakMeter(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const rad = Math.PI / 180;
+      const dLat = (lat2 - lat1) * rad;
+      const dLon = (lon2 - lon1) * rad;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; 
+    }
+
     function updateClock() {
       const now = new Date();
       const options = { 
@@ -268,16 +322,31 @@
     }
     setInterval(updateClock, 1000);
 
-    // Membaca Konfigurasi Logo & Data dari Firebase
     function muatDataFirebase() {
-      // Load URL Logo dari Firebase Firestore
+      // Load Setting Konfigurasi
       db.collection('settings').doc('app_config').onSnapshot((doc) => {
-        if (doc.exists && doc.data().logoUrl) {
-          document.getElementById('logo-img').src = doc.data().logoUrl;
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.logoUrl) document.getElementById('logo-img').src = data.logoUrl;
+          if (data.jamMasukMax) configApp.jamMasukMax = data.jamMasukMax;
+          if (data.jamPulangMin) configApp.jamPulangMin = data.jamPulangMin;
+          if (data.lat && data.lng) {
+            configApp.lat = data.lat;
+            configApp.lng = data.lng;
+            configApp.radius = data.radius || 100;
+            document.getElementById('cfgLat').value = data.lat;
+            document.getElementById('cfgLng').value = data.lng;
+            document.getElementById('cfgRadius').value = data.radius || 100;
+          }
+
+          document.getElementById('cfgJamMasuk').value = configApp.jamMasukMax;
+          document.getElementById('cfgJamPulang').value = configApp.jamPulangMin;
+          document.getElementById('lblJamMasuk').innerText = configApp.jamMasukMax;
+          document.getElementById('lblJamPulang').innerText = configApp.jamPulangMin;
         }
       });
 
-      // Load Data Karyawan Realtime
+      // Load Data Karyawan
       db.collection('karyawan').onSnapshot((snapshot) => {
         daftarKaryawan = [];
         snapshot.forEach((doc) => {
@@ -289,7 +358,7 @@
         }
       });
 
-      // Load Log Presensi Realtime
+      // Load Log Presensi
       db.collection('log_absensi').orderBy('waktu', 'desc').onSnapshot((snapshot) => {
         logAbsensi = [];
         snapshot.forEach((doc) => {
@@ -297,6 +366,49 @@
         });
         renderTabelLogAbsen();
       });
+    }
+
+    async function simpanPengaturanJam() {
+      const pass = prompt("Masukkan Password Pengaturan Jam:\n(Password: jam@1234#)");
+      if (pass === "jam@1234#") {
+        const jamMasuk = document.getElementById('cfgJamMasuk').value;
+        const jamPulang = document.getElementById('cfgJamPulang').value;
+
+        if (!jamMasuk || !jamPulang) return alert("Pilih jam masuk dan jam pulang!");
+
+        try {
+          await db.collection('settings').doc('app_config').set({
+            jamMasukMax: jamMasuk,
+            jamPulangMin: jamPulang
+          }, { merge: true });
+          alert("✅ Pengaturan Jam Kerja Berhasil Diperbarui!");
+        } catch (err) { alert("Gagal menyimpan: " + err.message); }
+      } else if (pass !== null) alert("Password Salah!");
+    }
+
+    async function simpanPengaturanZona() {
+      const lat = parseFloat(document.getElementById('cfgLat').value);
+      const lng = parseFloat(document.getElementById('cfgLng').value);
+      const radius = parseFloat(document.getElementById('cfgRadius').value);
+
+      if (isNaN(lat) || isNaN(lng) || isNaN(radius)) {
+        return alert("Harap isi Latitude, Longitude, dan Radius yang valid!");
+      }
+
+      try {
+        await db.collection('settings').doc('app_config').set({ lat, lng, radius }, { merge: true });
+        alert("✅ Batas Zona GPS Kantor Berhasil Disimpan!");
+      } catch (err) { alert("Gagal menyimpan zona: " + err.message); }
+    }
+
+    function setLokasiSaatIni() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          document.getElementById('cfgLat').value = pos.coords.latitude;
+          document.getElementById('cfgLng').value = pos.coords.longitude;
+          alert("📍 Koordinat lokasi Anda saat ini telah diisikan!");
+        });
+      }
     }
 
     async function initFaceAI() {
@@ -366,7 +478,6 @@
       document.getElementById('btn-logout-admin').style.display = 'none';
     }
 
-    // SIMPAN LOGO PERMANEN KE FIREBASE
     async function ubahLogo() {
       const pass = prompt("Masukkan Password Admin Logo:\n(Password: logo@1234#)");
       if (pass === "logo@1234#") {
@@ -374,10 +485,8 @@
         if (urlBaru) {
           try {
             await db.collection('settings').doc('app_config').set({ logoUrl: urlBaru }, { merge: true });
-            alert("Logo berhasil diperbarui dan disimpan secara permanen di Firebase!");
-          } catch (err) {
-            alert("Gagal menyimpan logo: " + err.message);
-          }
+            alert("Logo berhasil diperbarui!");
+          } catch (err) { alert("Gagal menyimpan logo: " + err.message); }
         }
       } else if (pass !== null) alert("Password Salah!");
     }
@@ -402,10 +511,11 @@
           await db.collection('karyawan').add({
             nama, nik, jabatan, kodeUnik,
             totalHadir: 0,
+            statusAbsen: 'PULANG', // default awal
             faceDescriptor: Array.from(detection.descriptor),
             createdAt: new Date()
           });
-          alert(`Karyawan ${nama} berhasil disimpan ke Firebase!`);
+          alert(`Karyawan ${nama} berhasil disimpan!`);
           document.getElementById('newNama').value = '';
           document.getElementById('newNik').value = '';
           document.getElementById('newJabatan').value = '';
@@ -447,8 +557,9 @@
           <td>${item.nik}</td>
           <td>${item.jabatan}</td>
           <td><code>${item.kodeUnik}</code></td>
+          <td>${formatTanggal(item.lastMasuk)}</td>
+          <td>${formatTanggal(item.lastPulang)}</td>
           <td><strong>${item.totalHadir || 0}</strong> Hari</td>
-          <td>${formatTanggal(item.lastAbsen)}</td>
           <td><button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="hapusKaryawan('${item.docId}')">Hapus</button></td>
         `;
         tbody.appendChild(tr);
@@ -459,17 +570,20 @@
       const tbody = document.getElementById('tabelLogAbsen');
       tbody.innerHTML = '';
       if (logAbsensi.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada riwayat presensi.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat presensi.</td></tr>';
         return;
       }
       logAbsensi.forEach((log, index) => {
         const tr = document.createElement('tr');
+        const badgeColor = log.tipe === 'MASUK' ? '#2e7d32' : '#e65100';
         tr.innerHTML = `
           <td>${index + 1}</td>
+          <td><span style="background:${badgeColor}; color:#fff; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">${log.tipe || 'MASUK'}</span></td>
           <td><strong>${formatTanggal(log.waktu)}</strong></td>
           <td>${log.nama}</td>
           <td>${log.jabatan}</td>
-          <td><a href="https://maps.google.com/?q=${log.latitude},${log.longitude}" target="_blank" style="color:#1976d2; font-weight:bold;">📍 Lihat di Peta (${log.latitude.toFixed(4)}, ${log.longitude.toFixed(4)})</a></td>
+          <td>${log.jarakMeter !== undefined ? Math.round(log.jarakMeter) + " Meter" : "-"}</td>
+          <td><a href="https://maps.google.com/?q=${log.latitude},${log.longitude}" target="_blank" style="color:#1976d2; font-weight:bold;">📍 Peta (${log.latitude.toFixed(4)}, ${log.longitude.toFixed(4)})</a></td>
         `;
         tbody.appendChild(tr);
       });
@@ -478,15 +592,16 @@
     function eksporExcel() {
       const pass = prompt("Masukkan Password Ekspor Excel:\n(Password: abseb@1234#)");
       if (pass === "abseb@1234#") {
-        const wsData = [["No", "Tanggal, Bulan & Tahun", "Nama Karyawan", "NIK", "Jabatan", "Kode Unik", "Total Kehadiran"]];
-        daftarKaryawan.forEach((k, i) => wsData.push([
+        const wsData = [["No", "Tipe Absen", "Tanggal, Bulan, Tahun & Jam", "Nama Karyawan", "Jabatan", "Jarak (Meter)", "Latitude", "Longitude"]];
+        logAbsensi.forEach((log, i) => wsData.push([
           i + 1,
-          formatTanggal(k.lastAbsen),
-          k.nama,
-          k.nik,
-          k.jabatan,
-          k.kodeUnik,
-          k.totalHadir || 0
+          log.tipe || 'MASUK',
+          formatTanggal(log.waktu),
+          log.nama,
+          log.jabatan,
+          log.jarakMeter ? Math.round(log.jarakMeter) : 0,
+          log.latitude,
+          log.longitude
         ]));
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
@@ -509,11 +624,45 @@
       }
     }
 
+    // Convert string HH:MM ke Menit
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
     async function prosesAbsen() {
       if (!karyawanAktif || !isAiLoaded) return;
       const infoDiv = document.getElementById('infoLokasi');
-      infoDiv.innerHTML = "<em>Memindai wajah & lokasi GPS...</em>";
+      infoDiv.innerHTML = `<em>Memindai wajah & lokasi GPS...</em>`;
 
+      const sekarang = new Date();
+      const menitSekarang = sekarang.getHours() * 60 + sekarang.getMinutes();
+
+      // Penentuan Tipe Absen (Otomatis Masuk / Pulang)
+      let tipeAbsen = 'MASUK';
+      if (karyawanAktif.statusAbsen === 'MASUK') {
+        tipeAbsen = 'PULANG';
+      }
+
+      // Validasi Toleransi Jam Operasional
+      if (tipeAbsen === 'MASUK') {
+        const batasMasukMin = timeToMinutes(configApp.jamMasukMax);
+        if (menitSekarang > batasMasukMin) {
+          infoDiv.innerHTML = `<span style='color:red;'>❌ Absen Masuk Ditolak! Waktu sudah melewati batas jam masuk (${configApp.jamMasukMax}).</span>`;
+          alert(`❌ ABSEN MASUK DITOLAK!\n\nBatas maksimal jam masuk adalah jam ${configApp.jamMasukMax}.\nSaat ini jam ${sekarang.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}.`);
+          return;
+        }
+      } else if (tipeAbsen === 'PULANG') {
+        const batasPulangMin = timeToMinutes(configApp.jamPulangMin);
+        if (menitSekarang < batasPulangMin) {
+          infoDiv.innerHTML = `<span style='color:red;'>❌ Absen Pulang Ditolak! Belum memasuki batas jam pulang (${configApp.jamPulangMin}).</span>`;
+          alert(`❌ ABSEN PULANG DITOLAK!\n\nBatas minimal jam pulang adalah jam ${configApp.jamPulangMin}.\nSaat ini jam ${sekarang.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}.`);
+          return;
+        }
+      }
+
+      // 1. Verifikasi Wajah AI
       const videoElem = document.getElementById('webcamKaryawan');
       const currentDetection = await faceapi.detectSingleFace(videoElem).withFaceLandmarks().withFaceDescriptor();
 
@@ -530,32 +679,54 @@
         return;
       }
 
+      // 2. Verifikasi Lokasi GPS & Radius Geofence
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (position) => {
-          try {
-            const sekarang = new Date();
-            
-            // 1. Update data master karyawan
-            await db.collection('karyawan').doc(karyawanAktif.docId).update({
-              totalHadir: firebase.firestore.FieldValue.increment(1),
-              lastLatitude: position.coords.latitude,
-              lastLongitude: position.coords.longitude,
-              lastAbsen: sekarang
-            });
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
 
-            // 2. Simpan ke log riwayat presensi
+          if (configApp.lat !== 0 && configApp.lng !== 0) {
+            const jarak = hitungJarakMeter(userLat, userLng, configApp.lat, configApp.lng);
+
+            if (jarak > configApp.radius) {
+              infoDiv.innerHTML = `<span style='color:red;'>❌ Di Luar Zona Kantor! Jarak Anda: ${Math.round(jarak)} Meter (Maksimal: ${configApp.radius} Meter).</span>`;
+              alert(`❌ Presensi Ditolak!\n\nAnda berada di luar zona lokasi kantor.\nJarak Anda: ${Math.round(jarak)} meter.`);
+              return;
+            }
+          }
+
+          try {
+            const jarakAktual = (configApp.lat !== 0 && configApp.lng !== 0) ? hitungJarakMeter(userLat, userLng, configApp.lat, configApp.lng) : 0;
+            
+            const updatePayload = {
+              lastLatitude: userLat,
+              lastLongitude: userLng,
+              statusAbsen: tipeAbsen
+            };
+
+            if (tipeAbsen === 'MASUK') {
+              updatePayload.lastMasuk = sekarang;
+              updatePayload.totalHadir = firebase.firestore.FieldValue.increment(1);
+            } else {
+              updatePayload.lastPulang = sekarang;
+            }
+
+            await db.collection('karyawan').doc(karyawanAktif.docId).update(updatePayload);
+
             await db.collection('log_absensi').add({
               karyawanId: karyawanAktif.docId,
               nama: karyawanAktif.nama,
               jabatan: karyawanAktif.jabatan,
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
+              tipe: tipeAbsen,
+              latitude: userLat,
+              longitude: userLng,
+              jarakMeter: jarakAktual,
               waktu: sekarang
             });
 
             const teksTanggal = sekarang.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            infoDiv.innerHTML = `✓ Presensi Berhasil Pada ${teksTanggal} (${karyawanAktif.nama})`;
-            alert(`✅ Presensi Berhasil!\n\nNama: ${karyawanAktif.nama}\nWaktu: ${teksTanggal}`);
+            infoDiv.innerHTML = `✓ Absen ${tipeAbsen} Berhasil Pada ${teksTanggal} (${karyawanAktif.nama})`;
+            alert(`✅ Absen ${tipeAbsen} Berhasil!\n\nNama: ${karyawanAktif.nama}\nWaktu: ${teksTanggal}`);
             
             // Reset Tampilan
             document.getElementById('inputKodeUnik').value = '';
@@ -565,7 +736,7 @@
 
           } catch (err) { alert("Gagal update ke Firebase: " + err.message); }
         }, (err) => {
-          infoDiv.innerHTML = "<span style='color:red;'>❌ Gagal mendapatkan lokasi GPS. Harap aktifkan Izin Lokasi/GPS di Browser Anda.</span>";
+          infoDiv.innerHTML = "<span style='color:red;'>❌ Gagal mendapatkan lokasi GPS. Aktifkan izin GPS di Browser.</span>";
         });
       } else {
         alert("Browser Anda tidak mendukung fitur Lokasi GPS.");
