@@ -1,2 +1,2 @@
-# laporan-CS-OB
-untuk mempemudah laporan karyawan dan agar lebih terkontrak oleh hrd
+absensi-karyawan
+untuk mempermudah pendataan karwan setiap harinya 
