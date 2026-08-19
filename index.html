@@ -7,6 +7,11 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Library Chart.js untuk Grafik Interaktif -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase App & Database SDK (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg-backdrop: url('https://via.placeholder.com/1200x800?text=Backdrop+Perusahaan');
@@ -279,7 +284,6 @@
   </div>
 </div>
 
-<!-- Input File Tersembunyi untuk Upload Logo Baru dari Galeri Admin -->
 <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
 
 <!-- MODAL STATISTIK & GRAFIK PENILAIAN BULANAN -->
@@ -312,13 +316,11 @@
       </div>
     </div>
 
-    <!-- 1. DIAGRAM LINGKARAN (PIE CHART DI ATAS) -->
     <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Proporsi Kontribusi (Diagram Lingkaran)</h5>
     <div class="chart-container-pie">
       <canvas id="pieChart"></canvas>
     </div>
 
-    <!-- 2. GRAFIK BATANG (BAR CHART DI BAWAHNYA) -->
     <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Jumlah Laporan Per-Karyawan (Grafik Batang)</h5>
     <div class="chart-container-bar">
       <canvas id="performanceChart"></canvas>
@@ -352,17 +354,31 @@
   <div class="notif-card">
     <div style="font-size: 45px; color: #27ae60;">✔</div>
     <h3 style="color: var(--dark-blue); margin: 5px 0;">Laporan Berhasil Terkirim!</h3>
-    <p style="color: #555; font-size: 13px;">Foto Bukti Kerja berhasil tersimpan di sistem Admin.</p>
+    <p style="color: #555; font-size: 13px;">Foto Bukti Kerja berhasil tersimpan di server cloud Admin.</p>
     <button onclick="closeNotifAndLogout()" style="background-color: #27ae60;">Selesai</button>
   </div>
 </div>
 
 <script>
+  // KONFIGURASI FIREBASE ANDA
+  const firebaseConfig = {
+    apiKey: "AIzaSyAB-pj49qih8hxh1QgoXyBzMN-pfMBDfjY",
+    authDomain: "laporan-kerja-cs-cs.firebaseapp.com",
+    databaseURL: "https://laporan-kerja-cs-cs-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "laporan-kerja-cs-cs",
+    storageBucket: "laporan-kerja-cs-cs.firebasestorage.app",
+    messagingSenderId: "745875777066",
+    appId: "1:745875777066:web:0ba178c799a16157f7c553",
+    measurementId: "G-9DN884X5QH"
+  };
+
+  // Inisialisasi Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
   const DEFAULT_LOGO = "logo.jpeg";
   const ADMIN_PASSWORD = "adnin@1234#";
   const DELETE_PASSWORD = "delet@1234#"; 
-
-  // Palet warna cerah untuk Diagram Lingkaran
   const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
 
   let defaultWorkers = [
@@ -370,19 +386,45 @@
     { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
   ];
 
-  let workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
-  let reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
+  let workers = [];
+  let reports = [];
   let myBarChart = null; 
   let myPieChart = null;
 
   window.onload = function() {
     loadLogo();
     loadBackdrop();
-    renderWorkerSelect();
     setupYearFilter();
+    initFirebaseSync();
   };
 
-  // VERIFIKASI LOGIN DENGAN KODE UNIK DARI DATA KARYAWAN
+  // Sinkronisasi data Firebase secara Real-Time
+  function initFirebaseSync() {
+    // Sync Data Karyawan
+    db.ref('workers').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        workers = Array.isArray(data) ? data : Object.values(data);
+      } else {
+        workers = defaultWorkers;
+        db.ref('workers').set(defaultWorkers);
+      }
+      renderWorkerSelect();
+      renderWorkerList();
+    });
+
+    // Sync Data Laporan
+    db.ref('reports').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        reports = Object.keys(data).map(key => ({ ...data[key], firebaseKey: key }));
+      } else {
+        reports = [];
+      }
+      renderReports();
+    });
+  }
+
   function loginWorker() {
     const inputCode = document.getElementById('uniqueCode').value.trim();
     if (!inputCode) {
@@ -390,8 +432,7 @@
       return;
     }
 
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
-    const matchedWorker = workers.find(w => w.code && w.code.toLowerCase() === inputCode.toLowerCase());
+    const matchedWorker = workers.find(w => w && w.code && w.code.toLowerCase() === inputCode.toLowerCase());
 
     if (matchedWorker) {
       document.getElementById('screenLogin').classList.remove('active');
@@ -437,9 +478,9 @@
       try {
         localStorage.setItem('cs_logo', base64Image);
         applyLogo(base64Image);
-        alert("Logo berhasil diperbarui dan tersimpan permanen!");
+        alert("Logo berhasil diperbarui dan tersimpan!");
       } catch (err) {
-        alert("Ukuran gambar logo terlalu besar! Silakan gunakan foto berukuran lebih kecil.");
+        alert("Ukuran gambar logo terlalu besar!");
       }
     };
     reader.readAsDataURL(file);
@@ -447,17 +488,12 @@
 
   function loadLogo() {
     const savedLogo = localStorage.getItem('cs_logo');
-    if (savedLogo) {
-      applyLogo(savedLogo);
-    } else {
-      applyLogo(DEFAULT_LOGO);
-    }
+    applyLogo(savedLogo || DEFAULT_LOGO);
   }
 
   function applyLogo(urlOrBase64) {
     const compLogo = document.getElementById('companyLogo');
     const waterLogo = document.getElementById('watermarkLogo');
-    
     if (compLogo) compLogo.src = urlOrBase64;
     if (waterLogo) waterLogo.src = urlOrBase64;
   }
@@ -507,13 +543,12 @@
     });
 
     let totalMonthlyReports = monthlyReports.length;
-
     let counts = {};
-    workers.forEach(w => counts[w.name] = 0);
+    workers.forEach(w => { if(w) counts[w.name] = 0; });
 
     monthlyReports.forEach(r => {
       workers.forEach(w => {
-        if (r.worker.startsWith(w.name)) {
+        if (w && r.worker && r.worker.startsWith(w.name)) {
           counts[w.name] = (counts[w.name] || 0) + 1;
         }
       });
@@ -532,6 +567,7 @@
     }
 
     workers.forEach(w => {
+      if(!w) return;
       let count = counts[w.name] || 0;
       let percentage = totalMonthlyReports > 0 ? ((count / totalMonthlyReports) * 100).toFixed(1) : 0;
       
@@ -617,10 +653,10 @@
   }
 
   function renderWorkerList() {
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const tbody = document.getElementById('registeredWorkersBody');
     tbody.innerHTML = '';
     workers.forEach((w, i) => {
+      if(!w) return;
       let roleBadge = w.role === 'OB' 
         ? '<span class="badge-role badge-ob">OB</span>' 
         : '<span class="badge-role badge-cs">CS</span>';
@@ -648,7 +684,7 @@
       return;
     }
 
-    if (workers.some(w => w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
+    if (workers.some(w => w && w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
       alert("Kode Unik sudah digunakan oleh karyawan lain!");
       return;
     }
@@ -661,18 +697,18 @@
     
     workers.push({ name: name, photo: photo, role: role, code: code.trim() });
     saveWorkers();
-    alert("Karyawan " + name + " berhasil ditambahkan dengan Kode Unik: " + code);
+    alert("Karyawan " + name + " berhasil ditambahkan!");
   }
 
   function changeEmployeeCode() {
     const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Kode Uniknya:");
     if (!name) return;
     
-    const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
+    const worker = workers.find(w => w && w.name.toLowerCase() === name.toLowerCase());
     if (worker) {
       const newCode = prompt("Masukkan Kode Unik Baru untuk " + worker.name + ":", worker.code || "");
       if (newCode) {
-        if (workers.some(w => w.name !== worker.name && w.code && w.code.toLowerCase() === newCode.trim().toLowerCase())) {
+        if (workers.some(w => w && w.name !== worker.name && w.code && w.code.toLowerCase() === newCode.trim().toLowerCase())) {
           alert("Kode Unik tersebut sudah dipakai oleh karyawan lain!");
           return;
         }
@@ -699,7 +735,7 @@
     const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Fotonya:");
     if (!name) return;
 
-    const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
+    const worker = workers.find(w => w && w.name.toLowerCase() === name.toLowerCase());
     if (worker) {
       const url = prompt("Masukkan URL Foto Baru:");
       if (url) { worker.photo = url; saveWorkers(); }
@@ -709,16 +745,14 @@
   }
 
   function saveWorkers() {
-    localStorage.setItem('cs_workers', JSON.stringify(workers));
-    renderWorkerSelect();
-    renderWorkerList();
+    db.ref('workers').set(workers);
   }
 
   function renderWorkerSelect() {
-    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
     const select = document.getElementById('workerSelect');
     select.innerHTML = '';
     workers.forEach((w) => {
+      if(!w) return;
       let opt = document.createElement('option');
       opt.value = w.name;
       opt.textContent = `${w.name} (${w.role || 'CS'})`;
@@ -731,11 +765,11 @@
 
   function updateWorkerPhoto() {
     const selectedName = document.getElementById('workerSelect').value;
-    const worker = workers.find(w => w.name === selectedName);
+    const worker = workers.find(w => w && w.name === selectedName);
     if (worker) document.getElementById('workerPhoto').src = worker.photo;
   }
 
-  // FUNGSI PENUMPANG BANYAK FOTO (MULTI-FILES READ)
+  // FUNGSI MEMBACA BANYAK FOTO
   function readMultipleFiles(files) {
     return Promise.all(Array.from(files).map(file => {
       return new Promise((resolve, reject) => {
@@ -747,16 +781,16 @@
     }));
   }
 
-  // SUBMIT LAPORAN MULTI-FOTO
+  // SUBMIT LAPORAN DENGAN FIREBASE DEREK (REALTIME)
   document.getElementById('reportForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const submitBtn = document.getElementById('btnSubmitReport');
-    submitBtn.innerText = "Mengirim Foto...";
+    submitBtn.innerText = "Mengirim Foto ke Cloud...";
     submitBtn.disabled = true;
 
     const selectedName = document.getElementById('workerSelect').value;
-    const workerObj = workers.find(w => w.name === selectedName);
+    const workerObj = workers.find(w => w && w.name === selectedName);
     const workerDisplay = workerObj ? `${workerObj.name} [${workerObj.role || 'CS'}]` : selectedName;
 
     const title = document.getElementById('jobTitle').value;
@@ -780,12 +814,13 @@
         after: imagesAfter
       };
 
-      reports.push(newReport);
-      localStorage.setItem('cs_reports', JSON.stringify(reports));
+      // Simpan ke Firebase Realtime Database
+      await db.ref('reports').push(newReport);
+
       document.getElementById('reportForm').reset();
       document.getElementById('notifModal').style.display = "flex";
     } catch (err) {
-      alert("Ukuran atau jumlah foto terlalu besar! Silakan kurangi jumlah foto atau gunakan ukuran file lebih kecil.");
+      alert("Gagal mengirim laporan! Pastikan koneksi internet stabil.");
     }
     
     submitBtn.innerText = "Kirim Laporan";
@@ -797,19 +832,19 @@
     logout();
   }
 
-  // TAMPILKAN LAPORAN MULTI-FOTO
   function renderReports() {
     const tbody = document.getElementById('reportTableBody');
     tbody.innerHTML = '';
-    reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
 
     if (reports.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada laporan.</td></tr>';
       return;
     }
 
-    reports.forEach((r, index) => {
-      // Render Foto Before (Mendukung 1 foto lama atau array multi-foto baru)
+    // Urutkan laporan dari yang terbaru
+    const sortedReports = [...reports].reverse();
+
+    sortedReports.forEach((r) => {
       let beforeHtml = '';
       if (Array.isArray(r.before)) {
         beforeHtml = r.before.map(img => `<img src="${img}" class="img-preview" style="margin:2px;" onclick="viewMedia('img', '${img}')">`).join('');
@@ -817,14 +852,11 @@
         beforeHtml = `<img src="${r.before}" class="img-preview" onclick="viewMedia('img', '${r.before}')">`;
       }
 
-      // Render Foto After (Mendukung 1 foto lama atau array multi-foto baru)
       let afterHtml = '';
       if (Array.isArray(r.after)) {
         afterHtml = r.after.map(img => `<img src="${img}" class="img-preview" style="margin:2px;" onclick="viewMedia('img', '${img}')">`).join('');
       } else if (r.after) {
         afterHtml = `<img src="${r.after}" class="img-preview" onclick="viewMedia('img', '${r.after}')">`;
-      } else if (r.videoAfter) {
-        afterHtml = `<video class="video-preview" onclick="viewMedia('video', '${r.videoAfter}')"><source src="${r.videoAfter}"></video>`;
       }
 
       let tr = document.createElement('tr');
@@ -835,17 +867,16 @@
         <td>${r.desc}</td>
         <td><div style="display:flex; flex-wrap:wrap; gap:3px;">${beforeHtml}</div></td>
         <td><div style="display:flex; flex-wrap:wrap; gap:3px;">${afterHtml}</div></td>
-        <td class="no-print"><button class="btn-delete" onclick="deleteReport(${index})">Hapus</button></td>
+        <td class="no-print"><button class="btn-delete" onclick="deleteReport('${r.firebaseKey}')">Hapus</button></td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  function deleteReport(index) {
+  function deleteReport(firebaseKey) {
     if (prompt("Masukkan Password Hapus Laporan:") === DELETE_PASSWORD) {
-      reports.splice(index, 1);
-      localStorage.setItem('cs_reports', JSON.stringify(reports));
-      renderReports();
+      db.ref('reports/' + firebaseKey).remove();
+      alert("Laporan berhasil dihapus!");
     } else {
       alert("Password Hapus Salah!");
     }
@@ -866,16 +897,13 @@
 
   function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
-  // EXPORT KE EXCEL
   function exportToExcel() {
-    let currentReports = JSON.parse(localStorage.getItem('cs_reports')) || [];
-
-    if (currentReports.length === 0) {
+    if (reports.length === 0) {
       alert("Tidak ada data laporan untuk diekspor!");
       return;
     }
 
-    let exportData = currentReports.map((r, index) => ({
+    let exportData = reports.map((r, index) => ({
       "No": index + 1,
       "Tanggal": r.date || "-",
       "Pekerja": r.worker || "-",
@@ -888,17 +916,16 @@
       const wb = XLSX.utils.book_new();
       
       ws['!cols'] = [
-        { wch: 5 },  // No
-        { wch: 20 }, // Tanggal
-        { wch: 20 }, // Pekerja
-        { wch: 30 }, // Judul
-        { wch: 45 }  // Penjelasan
+        { wch: 5 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 30 },
+        { wch: 45 }
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, "Laporan CS & OB");
       XLSX.writeFile(wb, "Laporan_Kebersihan_ElHajj.xlsx");
     } catch (err) {
-      console.error("Gagal melakukan ekspor Excel:", err);
       alert("Gagal melakukan ekspor Excel.");
     }
   }
