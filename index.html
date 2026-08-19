@@ -3,770 +3,905 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikasi Presensi Karyawan & Dasbor Admin</title>
-  
-  <!-- Chart.js & SheetJS -->
+  <title>Aplikasi Laporan CS & OB - El Hajj</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Library Chart.js untuk Grafik Interaktif -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- Firebase SDK (v9 Compat Mode) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-  <!-- Library Face API untuk Pemindaian AI Wajah -->
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-backdrop: url('https://via.placeholder.com/1200x800?text=Backdrop+Perusahaan');
+      --primary-blue: #3498db;
+      --light-blue: #ebf5fb;
+      --accent-blue: #2980b9;
+      --dark-blue: #1b4f72;
+    }
     body {
-      margin: 0; padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #ffffff;
-      background-image: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
-      background-size: cover; background-attachment: fixed;
-      min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+      margin: 0; padding: 0;
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh;
     }
-    .container {
-      background-color: #ffffff; border-top: 6px solid #0d47a1;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 12px;
-      width: 90%; max-width: 950px; margin: 30px auto; padding: 25px; position: relative;
+    .card {
+      background-color: var(--light-blue);
+      background-image: var(--bg-backdrop);
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: overlay;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+      width: 95%; max-width: 950px;
+      padding: 25px; margin: 20px 0;
+      box-sizing: border-box;
+      border: 2px solid #bfe3f7;
     }
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 15px; background: #e3f2fd; padding: 10px 15px; border-radius: 8px;
+    .inner-card {
+      background: rgba(255, 255, 255, 0.96);
+      padding: 25px; border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .header-section { text-align: center; margin-bottom: 20px; }
-    #logo-img { max-width: 140px; height: auto; margin-bottom: 10px; }
-    .header-arabic { font-size: 26px; font-family: 'Amiri', 'Traditional Arabic', serif; color: #0d47a1; margin: 10px 0; }
-    .sub-title { font-style: italic; color: #555; margin-bottom: 20px; }
-    .card { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-left: 5px solid #1976d2; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px 2px; }
-    .btn-primary { background-color: #1976d2; color: white; }
-    .btn-primary:hover { background-color: #1565c0; }
-    .btn-admin { background-color: #0d47a1; color: white; }
-    .btn-admin:hover { background-color: #002171; }
-    .btn-danger { background-color: #d32f2f; color: white; }
-    .btn-danger:hover { background-color: #9a0007; }
-    .btn-success { background-color: #2e7d32; color: white; }
-    .btn-success:hover { background-color: #1b5e20; }
-    .btn-secondary { background-color: #616161; color: white; }
-    .btn-secondary:hover { background-color: #424242; }
-    input[type="password"], input[type="text"], input[type="number"], input[type="time"] { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; margin-bottom: 10px; }
-    .webcam-box { width: 100%; max-width: 380px; height: 280px; background-color: #111; border-radius: 8px; margin: 15px auto; display: flex; justify-content: center; align-items: center; color: #fff; overflow: hidden; }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    .charts-wrapper { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-around; margin-top: 15px; }
-    .chart-box { flex: 1; min-width: 280px; max-width: 400px; background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #ffffff; }
-    th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 13px; }
-    th { background-color: #1976d2; color: white; }
-    .status-text { font-size: 14px; font-weight: bold; color: #2e7d32; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
-    .modal-box { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-    .live-clock { background: #0d47a1; color: #ffffff; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 15px; font-size: 14px; }
-    .info-jam { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 6px; font-size: 13px; color: #0d47a1; margin-bottom: 15px; text-align: center; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .logo-img { max-height: 120px; width: auto; margin-bottom: 10px; object-fit: contain; }
+    .bismillah { font-size: 24px; font-weight: bold; color: var(--dark-blue); margin: 10px 0 5px 0; }
+    .doa { font-style: italic; color: #5d6d7e; font-size: 14px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--dark-blue); }
+    input, select, textarea {
+      width: 100%; padding: 10px; 
+      border: 1px solid #aed6f1;
+      border-radius: 6px; box-sizing: border-box; font-size: 14px;
+      background-color: #f7fbfe;
+    }
+    button {
+      width: 100%; padding: 12px;
+      background-color: var(--primary-blue); color: white; border: none;
+      border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+    button:hover { background-color: var(--accent-blue); }
+    .btn-admin { background-color: #2980b9; margin-top: 5px; }
+    .btn-stats { background-color: #f39c12; color: white; }
+    .btn-excel { background-color: #27ae60; }
+    .btn-print { background-color: #8e44ad; }
+    .btn-delete { background-color: #e74c3c; padding: 5px 10px; font-size: 12px; margin-top: 0; color: white; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-logout { background-color: #e74c3c; margin-top: 20px; }
+    .screen { display: none; }
+    .active { display: block; }
+    .table-responsive { overflow-x: auto; margin-top: 15px; position: relative; z-index: 2; }
+
+    .printable-container {
+      position: relative;
+      padding: 30px 20px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #d4e6f1;
+      overflow: hidden;
+      min-height: 400px;
+    }
+
+    .watermark-bg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 75%;
+      max-width: 420px;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    table { width: 100%; border-collapse: collapse; position: relative; z-index: 2; background: transparent; }
+    th, td { border: 1px solid rgba(212, 230, 241, 0.8); padding: 10px; text-align: left; font-size: 12px; }
+    th { background-color: rgba(235, 245, 251, 0.9); color: var(--dark-blue); }
+    td { background-color: rgba(255, 255, 255, 0.8); }
+    
+    .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+    .emp-photo { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid var(--primary-blue); }
+    
+    .badge-role {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+    }
+    .badge-cs { background-color: #27ae60; }
+    .badge-ob { background-color: #e67e22; }
+    
+    .progress-bar-bg { background-color: #e0e0e0; border-radius: 10px; width: 100%; height: 12px; overflow: hidden; }
+    .progress-bar-fill { background-color: #3498db; height: 100%; width: 0%; transition: width 0.4s ease; }
+
+    .modal {
+      display: none; position: fixed; z-index: 1000; 
+      left: 0; top: 0; width: 100%; height: 100%; 
+      background-color: rgba(0,0,0,0.85); 
+      justify-content: center; align-items: center; flex-direction: column;
+    }
+    .modal-content { max-width: 90%; max-height: 80vh; border-radius: 8px; }
+    .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 750px; position: relative; max-height: 85vh; overflow-y: auto; }
+    .close-modal { position: absolute; top: 15px; right: 20px; color: #333; font-size: 28px; cursor: pointer; font-weight: bold; }
+
+    .chart-container-pie {
+      position: relative;
+      margin: 10px auto 20px auto;
+      height: 220px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .chart-container-bar {
+      position: relative;
+      margin: 10px 0 25px 0;
+      height: 220px;
+      width: 100%;
+    }
+
+    .notif-card { background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 350px; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printableArea, #printableArea * { visibility: visible; }
+      #printableArea { position: absolute; left: 0; top: 0; width: 100%; border: none; }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
-<body id="app-backdrop">
+<body>
 
-  <!-- Modal Login Admin -->
-  <div id="modalAdmin" class="modal-overlay">
-    <div class="modal-box">
-      <h3 style="margin-top:0; color:#0d47a1;">Masuk Dasbor Admin</h3>
-      <p>Masukkan Password Admin:</p>
-      <input type="password" id="passAdminInput" placeholder="Password Admin"><br>
-      <button class="btn btn-primary" onclick="submitLoginAdmin()">Masuk</button>
-      <button class="btn btn-secondary" onclick="tutupModalAdmin()">Batal</button>
-    </div>
-  </div>
-
-  <div class="container">
+<div class="card">
+  <div class="inner-card">
     
-    <!-- Top Bar -->
-    <div class="top-bar">
-      <span style="font-weight: bold; color: #0d47a1;">Aplikasi Presensi Karyawan</span>
-      <div>
-        <button id="btn-login-admin" class="btn btn-admin" onclick="bukaModalAdmin()">🔑 Buka Dasbor Admin</button>
-        <button id="btn-logout-admin" class="btn btn-danger" onclick="logoutAdmin()" style="display: none;">🚪 Keluar Admin</button>
+    <div class="header">
+      <img id="companyLogo" src="logo.jpeg" class="logo-img" alt="Logo El Hajj">
+    </div>
+
+    <!-- 1. LOGIN -->
+    <div id="screenLogin" class="screen active">
+      <div class="header">
+        <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+        <div class="doa">"Awali pekerjaanmu dengan berdoa"</div>
       </div>
+      <div class="form-group">
+        <label>Masukkan Kode Unik Pekerja:</label>
+        <input type="password" id="uniqueCode" placeholder="Masukkan kode unik (Contoh: CS123)">
+      </div>
+      <button onclick="loginWorker()">Masuk & Kirim Laporan</button>
+      <hr style="margin: 25px 0; border: 0; border-top: 1px solid #aed6f1;">
+      <button type="button" onclick="loginAdmin()" class="btn-admin">Masuk ke Pengaturan Admin</button>
     </div>
 
-    <!-- Status AI Wajah & Firebase -->
-    <div id="aiStatus" style="background:#fff3cd; color:#856404; padding:8px 12px; border-radius:6px; margin-bottom:15px; text-align:center; font-size:14px;">
-      ⏳ Memuat AI Verifikasi Wajah & Menghubungkan Firebase... Mohon tunggu.
-    </div>
-
-    <!-- Header Logo & Bismillah -->
-    <div class="header-section">
-      <img id="logo-img" src="logo.png" alt="Logo Perusahaan"><br>
-      <div class="header-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
-      <div class="sub-title">"Awali setiap pekerjaanmu dengan Bismillah"</div>
+    <!-- 2. FORM KARYAWAN -->
+    <div id="screenWorkerForm" class="screen">
+      <h2 style="color: var(--dark-blue); margin-top: 0;">Form Laporan Pekerjaan</h2>
       
-      <!-- Jam, Tanggal, Bulan & Tahun Realtime -->
-      <div class="live-clock" id="clockDisplay">📅 Memuat Waktu & Tanggal...</div>
+      <form id="reportForm">
+        <div class="form-group">
+          <label>Nama Pekerja:</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="workerSelect" required></select>
+            <img id="workerPhoto" src="https://via.placeholder.com/45" class="emp-photo" alt="Foto">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Judul Pekerjaan:</label>
+          <input type="text" id="jobTitle" placeholder="Contoh: Pembersihan Lobi / Menyiapkan Ruang Rapat" required>
+        </div>
+
+        <div class="form-group">
+          <label>Penjelasan Pekerjaan:</label>
+          <textarea id="jobDesc" rows="3" placeholder="Detail pekerjaan..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Foto Sebelum Pekerjaan (Before) - Bisa pilih >1 foto:</label>
+          <input type="file" id="imgBefore" accept="image/*" multiple required>
+        </div>
+
+        <div class="form-group">
+          <label>Foto Sesudah Pekerjaan (After) - Bisa pilih >1 foto:</label>
+          <input type="file" id="imgAfter" accept="image/*" multiple required>
+        </div>
+
+        <button type="submit" id="btnSubmitReport">Kirim Laporan</button>
+      </form>
+      
+      <button type="button" onclick="logout()" class="btn-logout">Keluar / Kembali</button>
     </div>
 
-    <!-- HALAMAN UTAMA KARYAWAN -->
-    <div id="page-karyawan">
-      <div class="card" id="sec-kode-unik">
-        <h3 style="color: #0d47a1;">Validasi Akses Presensi Karyawan</h3>
-        <p>Masukkan Kode Unik Anda sebelum melakukan presensi:</p>
-        <input type="password" id="inputKodeUnik" placeholder="Masukkan Kode Unik Karyawan">
-        <br>
-        <button class="btn btn-primary" onclick="verifikasiKodeUnik()">Masuk Absensi</button>
+    <!-- 3. PANEL ADMIN -->
+    <div id="screenAdminPanel" class="screen">
+      <h2 style="color: var(--dark-blue); margin-top: 0;">Panel Pengaturan & Riwayat Admin</h2>
+      
+      <!-- NAVIGASI DERETAN ATAS -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;" class="no-print">
+        <button type="button" onclick="openStatsModal()" class="btn-admin btn-stats" style="flex: 1.2; font-size: 11px;">📊 Grafik & Statistik Penilaian</button>
+        <button type="button" onclick="addWorker()" class="btn-admin" style="flex: 1; font-size: 11px;">+ Tambah Karyawan</button>
+        <button type="button" onclick="changeEmployeeCode()" class="btn-admin" style="flex: 1; font-size: 11px;">Atur Kode Karyawan</button>
+        <button type="button" onclick="changeEmployeePhoto()" class="btn-admin" style="flex: 1; font-size: 11px;">Atur Foto Karyawan</button>
+        <button type="button" onclick="changeLogo()" class="btn-admin" style="flex: 1; font-size: 11px;">Ubah Logo</button>
+        <button type="button" onclick="changeBackdrop()" class="btn-admin" style="flex: 1; font-size: 11px;">Ubah Backdrop</button>
       </div>
 
-      <div class="card" id="sec-absen" style="display: none;">
-        <h3 style="color: #0d47a1;">Pemindaian Verifikasi Wajah & Lokasi GPS</h3>
-        <p>Karyawan Teridentifikasi: <strong id="labelNamaKaryawan">-</strong></p>
-        
-        <div class="info-jam">
-          📌 <strong>Ketentuan Waktu Presensi Hari Ini:</strong><br>
-          • Batas Maksimal Absen Masuk: <strong id="lblJamMasuk">07:30</strong><br>
-          • Batas Minimal Absen Pulang: <strong id="lblJamPulang">16:00</strong>
+      <!-- TABEL DAFTAR KARYAWAN TERDAFTAR -->
+      <div class="no-print" style="margin-bottom: 25px; background: #eaf2f8; padding: 15px; border-radius: 8px;">
+        <h4 style="margin: 0 0 10px 0; color: var(--dark-blue);">Daftar Karyawan & Kode Unik Terdaftar:</h4>
+        <div class="table-responsive" style="margin-top: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30px;">No</th>
+                <th style="width: 50px;">Foto</th>
+                <th>Nama Karyawan</th>
+                <th style="width: 100px;">Kode Unik</th>
+                <th style="width: 90px;">Keterangan</th>
+                <th style="width: 80px; text-align: center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="registeredWorkersBody"></tbody>
+          </table>
         </div>
-
-        <div class="webcam-box">
-          <video id="webcamKaryawan" autoplay muted playsinline></video>
-        </div>
-
-        <button class="btn btn-success" id="btnProsesAbsen" onclick="prosesAbsen()">📸 Verifikasi Wajah & Absen</button>
-        <div id="infoLokasi" class="status-text" style="margin-top: 10px;"></div>
       </div>
-    </div>
 
-    <!-- DASBOR ADMIN -->
-    <div id="page-admin" style="display: none;">
-      <div class="card">
-        <h2 style="color: #0d47a1; margin-top: 0;">Panel Kontrol Dasbor Admin</h2>
-        
-        <div style="margin-bottom: 20px;">
-          <h4>Pengaturan Tampilan & Aturan Operasional:</h4>
-          <button class="btn btn-secondary" onclick="ubahLogo()">Ganti Logo Permanen (Password: logo@1234#)</button>
-          
-          <!-- Form Setting Jam Kerja Admin -->
-          <div style="margin-top: 15px; background: #e3f2fd; padding: 15px; border-radius: 8px;">
-            <h5 style="margin-top: 0; color: #0d47a1;">⏰ Pengaturan Jam Kerja (Password: jam@1234#)</h5>
-            <label style="font-size:12px; font-weight:bold;">Batas Maksimal Jam Masuk:</label><br>
-            <input type="time" id="cfgJamMasuk" value="07:30"><br>
-            <label style="font-size:12px; font-weight:bold;">Batas Minimal Jam Pulang:</label><br>
-            <input type="time" id="cfgJamPulang" value="16:00"><br>
-            <button class="btn btn-primary" onclick="simpanPengaturanJam()">Simpan Pengaturan Jam Kerja</button>
-          </div>
+      <!-- LAMPIRAN LAPORAN HASIL KERJA -->
+      <div id="printableArea" class="printable-container">
+        <img id="watermarkLogo" src="logo.jpeg" class="watermark-bg" alt="Watermark El Hajj">
 
-          <!-- Form Setting Zona GPS Kantor -->
-          <div style="margin-top: 15px; background: #eef3f8; padding: 15px; border-radius: 8px;">
-            <h5 style="margin-top: 0; color: #0d47a1;">📍 Pengaturan Batas Lokasi (Geofence Kantor)</h5>
-            <p style="margin: 5px 0 10px 0; font-size: 13px;">Karyawan hanya bisa absen jika berada dalam radius ini.</p>
-            <label style="font-size:12px;">Latitude Kantor:</label><br>
-            <input type="text" id="cfgLat" placeholder="-6.175392"><br>
-            <label style="font-size:12px;">Longitude Kantor:</label><br>
-            <input type="text" id="cfgLng" placeholder="106.827153"><br>
-            <label style="font-size:12px;">Radius Maksimum (Meter):</label><br>
-            <input type="number" id="cfgRadius" placeholder="100"><br>
-            <button class="btn btn-primary" onclick="simpanPengaturanZona()">Simpan Zona Kantor</button>
-            <button class="btn btn-secondary" onclick="setLokasiSaatIni()">Gunakan GPS Saya Saat Ini</button>
-          </div>
+        <h3 style="color: var(--dark-blue); text-align: center; margin-top: 5px; position: relative; z-index: 2;">LAMPIRAN LAPORAN KEGIATAN CS & OB</h3>
+        <p style="font-size: 11px; text-align: center; color: #555; margin-bottom: 15px; position: relative; z-index: 2;">Dokumen Resmi Operasional El Hajj</p>
+
+        <div class="table-responsive">
+          <table id="reportTable">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Pekerja</th>
+                <th>Judul</th>
+                <th>Penjelasan</th>
+                <th>Foto Before</th>
+                <th>Foto After</th>
+                <th class="no-print">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
         </div>
-
-        <hr>
-
-        <!-- Form Tambah Karyawan Baru -->
-        <div style="margin-bottom: 20px;">
-          <h4>Tambah Karyawan Baru & Registrasi Wajah (Password: daftar@1234#)</h4>
-          <input type="text" id="newNama" placeholder="Nama Karyawan"><br>
-          <input type="text" id="newNik" placeholder="NIK Karyawan"><br>
-          <input type="text" id="newJabatan" placeholder="Jabatan"><br>
-          <input type="text" id="newKodeUnik" placeholder="Kode Unik Karyawan"><br>
-          
-          <div style="margin-top: 10px;">
-            <p style="margin-bottom: 5px; font-weight: bold;">Arahkan Wajah Karyawan ke Kamera:</p>
-            <div class="webcam-box">
-              <video id="webcamAdmin" autoplay muted playsinline></video>
-            </div>
-          </div>
-
-          <button class="btn btn-primary" id="btnTambahKaryawan" onclick="tambahKaryawan()">+ Registrasi Wajah & Tambah Karyawan</button>
-        </div>
-
-        <hr>
-
-        <!-- Tabel Karyawan -->
-        <div style="margin-bottom: 20px;">
-          <h4>Daftar Nama Karyawan Terdaftar & Status Absen</h4>
-          <div style="overflow-x: auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Nama Karyawan</th>
-                  <th>NIK</th>
-                  <th>Jabatan</th>
-                  <th>Kode Unik</th>
-                  <th>Jam Masuk Terakhir</th>
-                  <th>Jam Pulang Terakhir</th>
-                  <th>Total Hadir</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="tabelKaryawan"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <hr>
-
-        <!-- Riwayat Log Presensi Realtime -->
-        <div style="margin-bottom: 20px;">
-          <h4>📋 Riwayat Log Presensi Real-time (Masuk & Pulang)</h4>
-          <div style="overflow-x: auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Tipe Presensi</th>
-                  <th>Tanggal, Bulan, Tahun & Jam</th>
-                  <th>Nama Karyawan</th>
-                  <th>Jabatan</th>
-                  <th>Jarak ke Kantor</th>
-                  <th>Lokasi GPS</th>
-                </tr>
-              </thead>
-              <tbody id="tabelLogAbsen"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <hr>
-
-        <div style="margin-bottom: 20px;">
-          <h4>Rekap Data Presensi:</h4>
-          <button class="btn btn-success" onclick="eksporExcel()">Unduh Rekap Excel (Password: abseb@1234#)</button>
-        </div>
-
-        <hr>
-
-        <h4>Grafik Statistik Karyawan Terrajin</h4>
-        <div class="charts-wrapper">
-          <div class="chart-box">
-            <h5 style="text-align:center;">Persentase Kehadiran</h5>
-            <canvas id="pieChart"></canvas>
-          </div>
-          <div class="chart-box">
-            <h5 style="text-align:center;">Total Kehadiran (Hari)</h5>
-            <canvas id="barChart"></canvas>
-          </div>
-        </div>
-
       </div>
+
+      <div style="margin-top: 15px;" class="no-print">
+        <button onclick="exportToExcel()" class="btn-excel">Kirim / Ekspor ke Excel</button>
+        <button onclick="window.print()" class="btn-print">Cetak / Print Laporan</button>
+      </div>
+
+      <button type="button" onclick="logout()" class="btn-logout">Keluar / Log Out Admin</button>
     </div>
 
   </div>
+</div>
 
-  <script>
-    // -------------------------------------------------------------------
-    // 1. KONFIGURASI FIREBASE ANDA
-    // -------------------------------------------------------------------
-    const firebaseConfig = {
-      apiKey: "AIzaSyD8x9XxxxExampleKey123", // Isikan API Key asli Anda
-      authDomain: "absensi-karyawan-df06f.firebaseapp.com",
-      projectId: "absensi-karyawan-df06f",
-      storageBucket: "absensi-karyawan-df06f.appspot.com",
-      messagingSenderId: "1234567890", // Isikan Sender ID asli Anda
-      appId: "1:1234567890:web:abc123def456" // Isikan App ID asli Anda
-    };
+<!-- Input File Tersembunyi untuk Upload Logo Baru dari Galeri Admin -->
+<input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<!-- MODAL STATISTIK & GRAFIK PENILAIAN BULANAN -->
+<div id="statsModal" class="modal">
+  <div class="modal-box">
+    <span class="close-modal" onclick="closeModal('statsModal')">&times;</span>
+    <h3 style="color: var(--dark-blue); margin-top:0;">📊 Grafik & Persentase Kinerja Bulanan</h3>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+      <div style="flex: 1;">
+        <label style="font-size: 12px;">Pilih Bulan:</label>
+        <select id="filterMonth" onchange="calculateMonthlyStats()">
+          <option value="0">Januari</option>
+          <option value="1">Februari</option>
+          <option value="2">Maret</option>
+          <option value="3">April</option>
+          <option value="4">Mei</option>
+          <option value="5">Juni</option>
+          <option value="6">Juli</option>
+          <option value="7">Agustus</option>
+          <option value="8">September</option>
+          <option value="9">Oktober</option>
+          <option value="10">November</option>
+          <option value="11">Desember</option>
+        </select>
+      </div>
+      <div style="flex: 1;">
+        <label style="font-size: 12px;">Pilih Tahun:</label>
+        <select id="filterYear" onchange="calculateMonthlyStats()"></select>
+      </div>
+    </div>
 
-    let daftarKaryawan = [];
-    let logAbsensi = [];
-    let karyawanAktif = null;
-    let chartPie = null;
-    let chartBar = null;
-    let currentStream = null;
-    let isAiLoaded = false;
+    <!-- 1. DIAGRAM LINGKARAN (PIE CHART DI ATAS) -->
+    <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Proporsi Kontribusi (Diagram Lingkaran)</h5>
+    <div class="chart-container-pie">
+      <canvas id="pieChart"></canvas>
+    </div>
 
-    // Default Jam Kerja & Geofence
-    let configApp = {
-      jamMasukMax: "07:30",
-      jamPulangMin: "16:00",
-      lat: 0,
-      lng: 0,
-      radius: 100
-    };
+    <!-- 2. GRAFIK BATANG (BAR CHART DI BAWAHNYA) -->
+    <h5 style="text-align: center; color: var(--dark-blue); margin: 15px 0 5px 0;">Jumlah Laporan Per-Karyawan (Grafik Batang)</h5>
+    <div class="chart-container-bar">
+      <canvas id="performanceChart"></canvas>
+    </div>
 
-    function hitungJarakMeter(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const rad = Math.PI / 180;
-      const dLat = (lat2 - lat1) * rad;
-      const dLon = (lon2 - lon1) * rad;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c; 
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Karyawan</th>
+            <th>Peran</th>
+            <th style="text-align: center;">Total Laporan</th>
+            <th>Persentase Kontribusi</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="statsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Zoom Media -->
+<div id="mediaModal" class="modal">
+  <span class="close-modal" onclick="closeModal('mediaModal')" style="color:white; top:20px; right:30px;">&times;</span>
+  <div id="mediaContainer"></div>
+</div>
+
+<!-- Modal Notifikasi -->
+<div id="notifModal" class="modal">
+  <div class="notif-card">
+    <div style="font-size: 45px; color: #27ae60;">✔</div>
+    <h3 style="color: var(--dark-blue); margin: 5px 0;">Laporan Berhasil Terkirim!</h3>
+    <p style="color: #555; font-size: 13px;">Foto Bukti Kerja berhasil tersimpan di sistem Admin.</p>
+    <button onclick="closeNotifAndLogout()" style="background-color: #27ae60;">Selesai</button>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_LOGO = "logo.jpeg";
+  const ADMIN_PASSWORD = "adnin@1234#";
+  const DELETE_PASSWORD = "delet@1234#"; 
+
+  // Palet warna cerah untuk Diagram Lingkaran
+  const PIE_COLORS = ['#3498db', '#e67e22', '#2ecc71', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#34495e'];
+
+  let defaultWorkers = [
+    { name: "Ahmad", photo: "https://via.placeholder.com/50?text=Ahmad", role: "CS", code: "CS123" },
+    { name: "Budi", photo: "https://via.placeholder.com/50?text=Budi", role: "OB", code: "OB456" }
+  ];
+
+  let workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+  let reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
+  let myBarChart = null; 
+  let myPieChart = null;
+
+  window.onload = function() {
+    loadLogo();
+    loadBackdrop();
+    renderWorkerSelect();
+    setupYearFilter();
+  };
+
+  // VERIFIKASI LOGIN DENGAN KODE UNIK DARI DATA KARYAWAN
+  function loginWorker() {
+    const inputCode = document.getElementById('uniqueCode').value.trim();
+    if (!inputCode) {
+      alert('Silakan masukkan Kode Unik terlebih dahulu!');
+      return;
     }
 
-    function updateClock() {
-      const now = new Date();
-      const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    const matchedWorker = workers.find(w => w.code && w.code.toLowerCase() === inputCode.toLowerCase());
+
+    if (matchedWorker) {
+      document.getElementById('screenLogin').classList.remove('active');
+      document.getElementById('screenWorkerForm').classList.add('active');
+      document.getElementById('uniqueCode').value = '';
+      
+      renderWorkerSelect();
+      document.getElementById('workerSelect').value = matchedWorker.name;
+      updateWorkerPhoto();
+    } else {
+      alert('Kode Unik Pekerja Salah atau Tidak Terdaftar!');
+    }
+  }
+
+  function loginAdmin() {
+    if (prompt("Masukkan Password Admin:") === ADMIN_PASSWORD) {
+      document.getElementById('screenLogin').classList.remove('active');
+      document.getElementById('screenAdminPanel').classList.add('active');
+      renderWorkerList();
+      renderReports();
+    } else {
+      alert("Password Admin Salah!");
+    }
+  }
+
+  function logout() {
+    document.getElementById('screenWorkerForm').classList.remove('active');
+    document.getElementById('screenAdminPanel').classList.remove('active');
+    document.getElementById('screenLogin').classList.add('active');
+  }
+
+  function changeLogo() {
+    document.getElementById('logoFileInput').click();
+  }
+
+  function handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Image = e.target.result;
+      try {
+        localStorage.setItem('cs_logo', base64Image);
+        applyLogo(base64Image);
+        alert("Logo berhasil diperbarui dan tersimpan permanen!");
+      } catch (err) {
+        alert("Ukuran gambar logo terlalu besar! Silakan gunakan foto berukuran lebih kecil.");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadLogo() {
+    const savedLogo = localStorage.getItem('cs_logo');
+    if (savedLogo) {
+      applyLogo(savedLogo);
+    } else {
+      applyLogo(DEFAULT_LOGO);
+    }
+  }
+
+  function applyLogo(urlOrBase64) {
+    const compLogo = document.getElementById('companyLogo');
+    const waterLogo = document.getElementById('watermarkLogo');
+    
+    if (compLogo) compLogo.src = urlOrBase64;
+    if (waterLogo) waterLogo.src = urlOrBase64;
+  }
+
+  function changeBackdrop() {
+    const url = prompt("Masukkan URL Gambar Backdrop Baru:");
+    if (url) {
+      localStorage.setItem('cs_backdrop', url);
+      document.documentElement.style.setProperty('--bg-backdrop', `url('${url}')`);
+      alert("Backdrop berhasil diperbarui.");
+    }
+  }
+
+  function loadBackdrop() {
+    const savedBackdrop = localStorage.getItem('cs_backdrop');
+    if (savedBackdrop) {
+      document.documentElement.style.setProperty('--bg-backdrop', `url('${savedBackdrop}')`);
+    }
+  }
+
+  function setupYearFilter() {
+    const yearSelect = document.getElementById('filterYear');
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+      let opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+    document.getElementById('filterMonth').value = new Date().getMonth();
+  }
+
+  function openStatsModal() {
+    document.getElementById('statsModal').style.display = 'flex';
+    calculateMonthlyStats();
+  }
+
+  function calculateMonthlyStats() {
+    const selectedMonth = parseInt(document.getElementById('filterMonth').value);
+    const selectedYear = parseInt(document.getElementById('filterYear').value);
+
+    let monthlyReports = reports.filter(r => {
+      let reportDate = new Date(r.timestamp || r.id);
+      return reportDate.getMonth() === selectedMonth && reportDate.getFullYear() === selectedYear;
+    });
+
+    let totalMonthlyReports = monthlyReports.length;
+
+    let counts = {};
+    workers.forEach(w => counts[w.name] = 0);
+
+    monthlyReports.forEach(r => {
+      workers.forEach(w => {
+        if (r.worker.startsWith(w.name)) {
+          counts[w.name] = (counts[w.name] || 0) + 1;
+        }
+      });
+    });
+
+    const tbody = document.getElementById('statsTableBody');
+    tbody.innerHTML = '';
+
+    let chartLabels = [];
+    let chartData = [];
+    let chartColors = [];
+
+    if (workers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data karyawan.</td></tr>';
+      return;
+    }
+
+    workers.forEach(w => {
+      let count = counts[w.name] || 0;
+      let percentage = totalMonthlyReports > 0 ? ((count / totalMonthlyReports) * 100).toFixed(1) : 0;
+      
+      let statusText = "Perlu Ditingkatkan";
+      let statusColor = "#e74c3c";
+      if (percentage >= 30) { statusText = "Sangat Rajin"; statusColor = "#27ae60"; }
+      else if (percentage >= 15) { statusText = "Cukup Rajin"; statusColor = "#f39c12"; }
+
+      chartLabels.push(`${w.name} (${w.role || 'CS'})`);
+      chartData.push(count);
+      chartColors.push(statusColor);
+
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${w.name}</strong></td>
+        <td><span class="badge-role ${w.role === 'OB' ? 'badge-ob' : 'badge-cs'}">${w.role || 'CS'}</span></td>
+        <td style="text-align: center;"><strong>${count}</strong> Laporan</td>
+        <td>
+          <div style="font-size:11px; margin-bottom:2px;">${percentage}%</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
+          </div>
+        </td>
+        <td><span style="color:${statusColor}; font-weight:bold; font-size:11px;">${statusText}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    renderCharts(chartLabels, chartData, chartColors);
+  }
+
+  function renderCharts(labels, data, barColors) {
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    if (myPieChart) myPieChart.destroy();
+
+    myPieChart = new Chart(ctxPie, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: PIE_COLORS.slice(0, labels.length)
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 } } }
+        }
+      }
+    });
+
+    const ctxBar = document.getElementById('performanceChart').getContext('2d');
+    if (myBarChart) myBarChart.destroy();
+
+    myBarChart = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Jumlah Laporan Terkirim',
+          data: data,
+          backgroundColor: barColors,
+          borderRadius: 6,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, precision: 0 }
+          }
+        }
+      }
+    });
+  }
+
+  function renderWorkerList() {
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    const tbody = document.getElementById('registeredWorkersBody');
+    tbody.innerHTML = '';
+    workers.forEach((w, i) => {
+      let roleBadge = w.role === 'OB' 
+        ? '<span class="badge-role badge-ob">OB</span>' 
+        : '<span class="badge-role badge-cs">CS</span>';
+
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td><img src="${w.photo}" class="emp-photo" style="width:30px;height:30px;"></td>
+        <td><strong>${w.name}</strong></td>
+        <td><code>${w.code || '-'}</code></td>
+        <td>${roleBadge}</td>
+        <td style="text-align: center;"><button class="btn-delete" onclick="deleteWorkerDirect(${i})">Hapus</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function addWorker() {
+    const name = prompt("Masukkan Nama Karyawan Baru:");
+    if (!name) return;
+
+    let code = prompt("Masukkan Kode Unik untuk " + name + " (Contoh: CS001):");
+    if (!code) {
+      alert("Kode unik wajib diisi!");
+      return;
+    }
+
+    if (workers.some(w => w.code && w.code.toLowerCase() === code.trim().toLowerCase())) {
+      alert("Kode Unik sudah digunakan oleh karyawan lain!");
+      return;
+    }
+
+    let roleInput = prompt("Masukkan Penggolongan Tugas Pekerja (Ketik CS atau OB):", "CS");
+    let role = "CS";
+    if (roleInput && roleInput.toUpperCase() === "OB") role = "OB";
+
+    const photo = prompt("Masukkan URL Foto Karyawan (Opsional):") || "https://via.placeholder.com/50";
+    
+    workers.push({ name: name, photo: photo, role: role, code: code.trim() });
+    saveWorkers();
+    alert("Karyawan " + name + " berhasil ditambahkan dengan Kode Unik: " + code);
+  }
+
+  function changeEmployeeCode() {
+    const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Kode Uniknya:");
+    if (!name) return;
+    
+    const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
+    if (worker) {
+      const newCode = prompt("Masukkan Kode Unik Baru untuk " + worker.name + ":", worker.code || "");
+      if (newCode) {
+        if (workers.some(w => w.name !== worker.name && w.code && w.code.toLowerCase() === newCode.trim().toLowerCase())) {
+          alert("Kode Unik tersebut sudah dipakai oleh karyawan lain!");
+          return;
+        }
+        worker.code = newCode.trim();
+        saveWorkers();
+        alert("Kode Unik karyawan " + worker.name + " berhasil diperbarui!");
+      }
+    } else {
+      alert("Karyawan tidak ditemukan.");
+    }
+  }
+
+  function deleteWorkerDirect(index) {
+    if (prompt("Masukkan Password Hapus Karyawan:") === DELETE_PASSWORD) {
+      workers.splice(index, 1);
+      saveWorkers();
+      alert("Karyawan berhasil dihapus!");
+    } else {
+      alert("Password Hapus Salah!");
+    }
+  }
+
+  function changeEmployeePhoto() {
+    const name = prompt("Masukkan Nama Karyawan yang Ingin Diubah Fotonya:");
+    if (!name) return;
+
+    const worker = workers.find(w => w.name.toLowerCase() === name.toLowerCase());
+    if (worker) {
+      const url = prompt("Masukkan URL Foto Baru:");
+      if (url) { worker.photo = url; saveWorkers(); }
+    } else {
+      alert("Karyawan tidak ditemukan.");
+    }
+  }
+
+  function saveWorkers() {
+    localStorage.setItem('cs_workers', JSON.stringify(workers));
+    renderWorkerSelect();
+    renderWorkerList();
+  }
+
+  function renderWorkerSelect() {
+    workers = JSON.parse(localStorage.getItem('cs_workers')) || defaultWorkers;
+    const select = document.getElementById('workerSelect');
+    select.innerHTML = '';
+    workers.forEach((w) => {
+      let opt = document.createElement('option');
+      opt.value = w.name;
+      opt.textContent = `${w.name} (${w.role || 'CS'})`;
+      select.appendChild(opt);
+    });
+    updateWorkerPhoto();
+  }
+
+  document.getElementById('workerSelect').addEventListener('change', updateWorkerPhoto);
+
+  function updateWorkerPhoto() {
+    const selectedName = document.getElementById('workerSelect').value;
+    const worker = workers.find(w => w.name === selectedName);
+    if (worker) document.getElementById('workerPhoto').src = worker.photo;
+  }
+
+  // FUNGSI PENUMPANG BANYAK FOTO (MULTI-FILES READ)
+  function readMultipleFiles(files) {
+    return Promise.all(Array.from(files).map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }));
+  }
+
+  // SUBMIT LAPORAN MULTI-FOTO
+  document.getElementById('reportForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('btnSubmitReport');
+    submitBtn.innerText = "Mengirim Foto...";
+    submitBtn.disabled = true;
+
+    const selectedName = document.getElementById('workerSelect').value;
+    const workerObj = workers.find(w => w.name === selectedName);
+    const workerDisplay = workerObj ? `${workerObj.name} [${workerObj.role || 'CS'}]` : selectedName;
+
+    const title = document.getElementById('jobTitle').value;
+    const desc = document.getElementById('jobDesc').value;
+    
+    const filesBefore = document.getElementById('imgBefore').files;
+    const filesAfter = document.getElementById('imgAfter').files;
+
+    try {
+      const imagesBefore = await readMultipleFiles(filesBefore);
+      const imagesAfter = await readMultipleFiles(filesAfter);
+
+      const newReport = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleString('id-ID'),
+        worker: workerDisplay,
+        title: title,
+        desc: desc,
+        before: imagesBefore,
+        after: imagesAfter
       };
-      document.getElementById('clockDisplay').innerText = "📅 " + now.toLocaleDateString('id-ID', options);
+
+      reports.push(newReport);
+      localStorage.setItem('cs_reports', JSON.stringify(reports));
+      document.getElementById('reportForm').reset();
+      document.getElementById('notifModal').style.display = "flex";
+    } catch (err) {
+      alert("Ukuran atau jumlah foto terlalu besar! Silakan kurangi jumlah foto atau gunakan ukuran file lebih kecil.");
     }
-    setInterval(updateClock, 1000);
+    
+    submitBtn.innerText = "Kirim Laporan";
+    submitBtn.disabled = false;
+  });
 
-    function muatDataFirebase() {
-      // Load Setting Konfigurasi
-      db.collection('settings').doc('app_config').onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          if (data.logoUrl) document.getElementById('logo-img').src = data.logoUrl;
-          if (data.jamMasukMax) configApp.jamMasukMax = data.jamMasukMax;
-          if (data.jamPulangMin) configApp.jamPulangMin = data.jamPulangMin;
-          if (data.lat && data.lng) {
-            configApp.lat = data.lat;
-            configApp.lng = data.lng;
-            configApp.radius = data.radius || 100;
-            document.getElementById('cfgLat').value = data.lat;
-            document.getElementById('cfgLng').value = data.lng;
-            document.getElementById('cfgRadius').value = data.radius || 100;
-          }
+  function closeNotifAndLogout() {
+    document.getElementById('notifModal').style.display = "none";
+    logout();
+  }
 
-          document.getElementById('cfgJamMasuk').value = configApp.jamMasukMax;
-          document.getElementById('cfgJamPulang').value = configApp.jamPulangMin;
-          document.getElementById('lblJamMasuk').innerText = configApp.jamMasukMax;
-          document.getElementById('lblJamPulang').innerText = configApp.jamPulangMin;
-        }
-      });
+  // TAMPILKAN LAPORAN MULTI-FOTO
+  function renderReports() {
+    const tbody = document.getElementById('reportTableBody');
+    tbody.innerHTML = '';
+    reports = JSON.parse(localStorage.getItem('cs_reports')) || [];
 
-      // Load Data Karyawan
-      db.collection('karyawan').onSnapshot((snapshot) => {
-        daftarKaryawan = [];
-        snapshot.forEach((doc) => {
-          daftarKaryawan.push({ docId: doc.id, ...doc.data() });
-        });
-        renderTabelKaryawan();
-        if (document.getElementById('page-admin').style.display !== 'none') {
-          renderGrafik();
-        }
-      });
-
-      // Load Log Presensi
-      db.collection('log_absensi').orderBy('waktu', 'desc').onSnapshot((snapshot) => {
-        logAbsensi = [];
-        snapshot.forEach((doc) => {
-          logAbsensi.push({ id: doc.id, ...doc.data() });
-        });
-        renderTabelLogAbsen();
-      });
+    if (reports.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada laporan.</td></tr>';
+      return;
     }
 
-    async function simpanPengaturanJam() {
-      const pass = prompt("Masukkan Password Pengaturan Jam:\n(Password: jam@1234#)");
-      if (pass === "jam@1234#") {
-        const jamMasuk = document.getElementById('cfgJamMasuk').value;
-        const jamPulang = document.getElementById('cfgJamPulang').value;
-
-        if (!jamMasuk || !jamPulang) return alert("Pilih jam masuk dan jam pulang!");
-
-        try {
-          await db.collection('settings').doc('app_config').set({
-            jamMasukMax: jamMasuk,
-            jamPulangMin: jamPulang
-          }, { merge: true });
-          alert("✅ Pengaturan Jam Kerja Berhasil Diperbarui!");
-        } catch (err) { alert("Gagal menyimpan: " + err.message); }
-      } else if (pass !== null) alert("Password Salah!");
-    }
-
-    async function simpanPengaturanZona() {
-      const lat = parseFloat(document.getElementById('cfgLat').value);
-      const lng = parseFloat(document.getElementById('cfgLng').value);
-      const radius = parseFloat(document.getElementById('cfgRadius').value);
-
-      if (isNaN(lat) || isNaN(lng) || isNaN(radius)) {
-        return alert("Harap isi Latitude, Longitude, dan Radius yang valid!");
+    reports.forEach((r, index) => {
+      // Render Foto Before (Mendukung 1 foto lama atau array multi-foto baru)
+      let beforeHtml = '';
+      if (Array.isArray(r.before)) {
+        beforeHtml = r.before.map(img => `<img src="${img}" class="img-preview" style="margin:2px;" onclick="viewMedia('img', '${img}')">`).join('');
+      } else if (r.before) {
+        beforeHtml = `<img src="${r.before}" class="img-preview" onclick="viewMedia('img', '${r.before}')">`;
       }
 
-      try {
-        await db.collection('settings').doc('app_config').set({ lat, lng, radius }, { merge: true });
-        alert("✅ Batas Zona GPS Kantor Berhasil Disimpan!");
-      } catch (err) { alert("Gagal menyimpan zona: " + err.message); }
-    }
-
-    function setLokasiSaatIni() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          document.getElementById('cfgLat').value = pos.coords.latitude;
-          document.getElementById('cfgLng').value = pos.coords.longitude;
-          alert("📍 Koordinat lokasi Anda saat ini telah diisikan!");
-        });
-      }
-    }
-
-    async function initFaceAI() {
-      const aiStatus = document.getElementById('aiStatus');
-      try {
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        
-        isAiLoaded = true;
-        aiStatus.style.background = "#d4edda";
-        aiStatus.style.color = "#155724";
-        aiStatus.innerText = "✅ AI Verifikasi Wajah & Database Firebase Siap!";
-      } catch (err) {
-        aiStatus.innerText = "❌ Gagal memuat AI Wajah: " + err.message;
-      }
-    }
-
-    async function startCamera(elementId) {
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-      }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        currentStream = stream;
-        const videoElem = document.getElementById(elementId);
-        if (videoElem) videoElem.srcObject = stream;
-      } catch (err) {
-        alert("Akses kamera ditolak/tidak tersedia.");
-      }
-    }
-
-    function bukaModalAdmin() {
-      document.getElementById('modalAdmin').style.display = 'flex';
-      document.getElementById('passAdminInput').value = '';
-      document.getElementById('passAdminInput').focus();
-    }
-
-    function tutupModalAdmin() {
-      document.getElementById('modalAdmin').style.display = 'none';
-    }
-
-    function submitLoginAdmin() {
-      const pass = document.getElementById('passAdminInput').value;
-      if (pass === "admin@1234#") {
-        tutupModalAdmin();
-        document.getElementById('page-karyawan').style.display = 'none';
-        document.getElementById('page-admin').style.display = 'block';
-        document.getElementById('btn-login-admin').style.display = 'none';
-        document.getElementById('btn-logout-admin').style.display = 'inline-block';
-
-        renderTabelKaryawan();
-        renderTabelLogAbsen();
-        renderGrafik();
-        startCamera('webcamAdmin');
-      } else {
-        alert("Password Admin Salah!");
-      }
-    }
-
-    function logoutAdmin() {
-      if (currentStream) currentStream.getTracks().forEach(track => track.stop());
-      document.getElementById('page-karyawan').style.display = 'block';
-      document.getElementById('page-admin').style.display = 'none';
-      document.getElementById('btn-login-admin').style.display = 'inline-block';
-      document.getElementById('btn-logout-admin').style.display = 'none';
-    }
-
-    async function ubahLogo() {
-      const pass = prompt("Masukkan Password Admin Logo:\n(Password: logo@1234#)");
-      if (pass === "logo@1234#") {
-        const urlBaru = prompt("Masukkan Link URL Logo Baru (contoh: https://domain.com/logo.png):");
-        if (urlBaru) {
-          try {
-            await db.collection('settings').doc('app_config').set({ logoUrl: urlBaru }, { merge: true });
-            alert("Logo berhasil diperbarui!");
-          } catch (err) { alert("Gagal menyimpan logo: " + err.message); }
-        }
-      } else if (pass !== null) alert("Password Salah!");
-    }
-
-    async function tambahKaryawan() {
-      if (!isAiLoaded) return alert("Tunggu AI Wajah selesai dimuat!");
-      const nama = document.getElementById('newNama').value.trim();
-      const nik = document.getElementById('newNik').value.trim();
-      const jabatan = document.getElementById('newJabatan').value.trim();
-      const kodeUnik = document.getElementById('newKodeUnik').value.trim();
-
-      if (!nama || !nik || !jabatan || !kodeUnik) return alert("Lengkapi semua data!");
-
-      const pass = prompt("Masukkan Password Tambah Karyawan:\n(Password: daftar@1234#)");
-      if (pass === "daftar@1234#") {
-        const videoElem = document.getElementById('webcamAdmin');
-        const detection = await faceapi.detectSingleFace(videoElem).withFaceLandmarks().withFaceDescriptor();
-
-        if (!detection) return alert("Wajah tidak terdeteksi di kamera!");
-
-        try {
-          await db.collection('karyawan').add({
-            nama, nik, jabatan, kodeUnik,
-            totalHadir: 0,
-            statusAbsen: 'PULANG', // default awal
-            faceDescriptor: Array.from(detection.descriptor),
-            createdAt: new Date()
-          });
-          alert(`Karyawan ${nama} berhasil disimpan!`);
-          document.getElementById('newNama').value = '';
-          document.getElementById('newNik').value = '';
-          document.getElementById('newJabatan').value = '';
-          document.getElementById('newKodeUnik').value = '';
-        } catch (err) { alert("Gagal menyimpan data: " + err.message); }
-      } else if (pass !== null) alert("Password Salah!");
-    }
-
-    async function hapusKaryawan(docId) {
-      const pass = prompt("Masukkan Password Hapus Karyawan:\n(Password: delet@1234#)");
-      if (pass === "delet@1234#") {
-        try {
-          await db.collection('karyawan').doc(docId).delete();
-          alert("Data karyawan dihapus!");
-        } catch (err) { alert("Gagal menghapus: " + err.message); }
-      } else if (pass !== null) alert("Password Salah!");
-    }
-
-    function formatTanggal(timestamp) {
-      if (!timestamp) return "-";
-      let date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-
-    function renderTabelKaryawan() {
-      const tbody = document.getElementById('tabelKaryawan');
-      tbody.innerHTML = '';
-      daftarKaryawan.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td><strong>${item.nama}</strong></td>
-          <td>${item.nik}</td>
-          <td>${item.jabatan}</td>
-          <td><code>${item.kodeUnik}</code></td>
-          <td>${formatTanggal(item.lastMasuk)}</td>
-          <td>${formatTanggal(item.lastPulang)}</td>
-          <td><strong>${item.totalHadir || 0}</strong> Hari</td>
-          <td><button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="hapusKaryawan('${item.docId}')">Hapus</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderTabelLogAbsen() {
-      const tbody = document.getElementById('tabelLogAbsen');
-      tbody.innerHTML = '';
-      if (logAbsensi.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat presensi.</td></tr>';
-        return;
-      }
-      logAbsensi.forEach((log, index) => {
-        const tr = document.createElement('tr');
-        const badgeColor = log.tipe === 'MASUK' ? '#2e7d32' : '#e65100';
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td><span style="background:${badgeColor}; color:#fff; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">${log.tipe || 'MASUK'}</span></td>
-          <td><strong>${formatTanggal(log.waktu)}</strong></td>
-          <td>${log.nama}</td>
-          <td>${log.jabatan}</td>
-          <td>${log.jarakMeter !== undefined ? Math.round(log.jarakMeter) + " Meter" : "-"}</td>
-          <td><a href="https://maps.google.com/?q=${log.latitude},${log.longitude}" target="_blank" style="color:#1976d2; font-weight:bold;">📍 Peta (${log.latitude.toFixed(4)}, ${log.longitude.toFixed(4)})</a></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function eksporExcel() {
-      const pass = prompt("Masukkan Password Ekspor Excel:\n(Password: abseb@1234#)");
-      if (pass === "abseb@1234#") {
-        const wsData = [["No", "Tipe Absen", "Tanggal, Bulan, Tahun & Jam", "Nama Karyawan", "Jabatan", "Jarak (Meter)", "Latitude", "Longitude"]];
-        logAbsensi.forEach((log, i) => wsData.push([
-          i + 1,
-          log.tipe || 'MASUK',
-          formatTanggal(log.waktu),
-          log.nama,
-          log.jabatan,
-          log.jarakMeter ? Math.round(log.jarakMeter) : 0,
-          log.latitude,
-          log.longitude
-        ]));
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
-        XLSX.writeFile(wb, "Rekap_Presensi_Karyawan_Lengkap.xlsx");
-      } else if (pass !== null) alert("Password Salah!");
-    }
-
-    function verifikasiKodeUnik() {
-      const kode = document.getElementById('inputKodeUnik').value.trim();
-      const ditemukan = daftarKaryawan.find(k => k.kodeUnik === kode);
-      if (ditemukan) {
-        karyawanAktif = ditemukan;
-        document.getElementById('labelNamaKaryawan').innerText = `${ditemukan.nama} (${ditemukan.jabatan})`;
-        document.getElementById('sec-kode-unik').style.display = 'none';
-        document.getElementById('sec-absen').style.display = 'block';
-        startCamera('webcamKaryawan');
-      } else {
-        alert("Kode Unik tidak terdaftar!");
-      }
-    }
-
-    // Convert string HH:MM ke Menit
-    function timeToMinutes(timeStr) {
-      if (!timeStr) return 0;
-      const [h, m] = timeStr.split(':').map(Number);
-      return h * 60 + m;
-    }
-
-    async function prosesAbsen() {
-      if (!karyawanAktif || !isAiLoaded) return;
-      const infoDiv = document.getElementById('infoLokasi');
-      infoDiv.innerHTML = `<em>Memindai wajah & lokasi GPS...</em>`;
-
-      const sekarang = new Date();
-      const menitSekarang = sekarang.getHours() * 60 + sekarang.getMinutes();
-
-      // Penentuan Tipe Absen (Otomatis Masuk / Pulang)
-      let tipeAbsen = 'MASUK';
-      if (karyawanAktif.statusAbsen === 'MASUK') {
-        tipeAbsen = 'PULANG';
+      // Render Foto After (Mendukung 1 foto lama atau array multi-foto baru)
+      let afterHtml = '';
+      if (Array.isArray(r.after)) {
+        afterHtml = r.after.map(img => `<img src="${img}" class="img-preview" style="margin:2px;" onclick="viewMedia('img', '${img}')">`).join('');
+      } else if (r.after) {
+        afterHtml = `<img src="${r.after}" class="img-preview" onclick="viewMedia('img', '${r.after}')">`;
+      } else if (r.videoAfter) {
+        afterHtml = `<video class="video-preview" onclick="viewMedia('video', '${r.videoAfter}')"><source src="${r.videoAfter}"></video>`;
       }
 
-      // Validasi Toleransi Jam Operasional
-      if (tipeAbsen === 'MASUK') {
-        const batasMasukMin = timeToMinutes(configApp.jamMasukMax);
-        if (menitSekarang > batasMasukMin) {
-          infoDiv.innerHTML = `<span style='color:red;'>❌ Absen Masuk Ditolak! Waktu sudah melewati batas jam masuk (${configApp.jamMasukMax}).</span>`;
-          alert(`❌ ABSEN MASUK DITOLAK!\n\nBatas maksimal jam masuk adalah jam ${configApp.jamMasukMax}.\nSaat ini jam ${sekarang.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}.`);
-          return;
-        }
-      } else if (tipeAbsen === 'PULANG') {
-        const batasPulangMin = timeToMinutes(configApp.jamPulangMin);
-        if (menitSekarang < batasPulangMin) {
-          infoDiv.innerHTML = `<span style='color:red;'>❌ Absen Pulang Ditolak! Belum memasuki batas jam pulang (${configApp.jamPulangMin}).</span>`;
-          alert(`❌ ABSEN PULANG DITOLAK!\n\nBatas minimal jam pulang adalah jam ${configApp.jamPulangMin}.\nSaat ini jam ${sekarang.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}.`);
-          return;
-        }
-      }
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${r.worker}</td>
+        <td>${r.title}</td>
+        <td>${r.desc}</td>
+        <td><div style="display:flex; flex-wrap:wrap; gap:3px;">${beforeHtml}</div></td>
+        <td><div style="display:flex; flex-wrap:wrap; gap:3px;">${afterHtml}</div></td>
+        <td class="no-print"><button class="btn-delete" onclick="deleteReport(${index})">Hapus</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-      // 1. Verifikasi Wajah AI
-      const videoElem = document.getElementById('webcamKaryawan');
-      const currentDetection = await faceapi.detectSingleFace(videoElem).withFaceLandmarks().withFaceDescriptor();
+  function deleteReport(index) {
+    if (prompt("Masukkan Password Hapus Laporan:") === DELETE_PASSWORD) {
+      reports.splice(index, 1);
+      localStorage.setItem('cs_reports', JSON.stringify(reports));
+      renderReports();
+    } else {
+      alert("Password Hapus Salah!");
+    }
+  }
 
-      if (!currentDetection) {
-        infoDiv.innerHTML = "<span style='color:red;'>❌ Wajah Tidak Terdeteksi! Pastikan Wajah Menghadap Kamera.</span>";
-        return;
-      }
+  function viewMedia(type, src) {
+    const modal = document.getElementById('mediaModal');
+    const container = document.getElementById('mediaContainer');
+    container.innerHTML = '';
 
-      const masterDescriptor = new Float32Array(karyawanAktif.faceDescriptor);
-      const distance = faceapi.euclideanDistance(masterDescriptor, currentDetection.descriptor);
+    if (type === 'img') {
+      container.innerHTML = `<img src="${src}" class="modal-content">`;
+    } else {
+      container.innerHTML = `<video controls autoplay class="modal-content"><source src="${src}"></video>`;
+    }
+    modal.style.display = "flex";
+  }
 
-      if (distance > 0.52) {
-        infoDiv.innerHTML = "<span style='color:red;'>❌ Wajah Tidak Cocok dengan Data Registrasi!</span>";
-        return;
-      }
+  function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
-      // 2. Verifikasi Lokasi GPS & Radius Geofence
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const userLat = position.coords.latitude;
-          const userLng = position.coords.longitude;
+  // EXPORT KE EXCEL
+  function exportToExcel() {
+    let currentReports = JSON.parse(localStorage.getItem('cs_reports')) || [];
 
-          if (configApp.lat !== 0 && configApp.lng !== 0) {
-            const jarak = hitungJarakMeter(userLat, userLng, configApp.lat, configApp.lng);
-
-            if (jarak > configApp.radius) {
-              infoDiv.innerHTML = `<span style='color:red;'>❌ Di Luar Zona Kantor! Jarak Anda: ${Math.round(jarak)} Meter (Maksimal: ${configApp.radius} Meter).</span>`;
-              alert(`❌ Presensi Ditolak!\n\nAnda berada di luar zona lokasi kantor.\nJarak Anda: ${Math.round(jarak)} meter.`);
-              return;
-            }
-          }
-
-          try {
-            const jarakAktual = (configApp.lat !== 0 && configApp.lng !== 0) ? hitungJarakMeter(userLat, userLng, configApp.lat, configApp.lng) : 0;
-            
-            const updatePayload = {
-              lastLatitude: userLat,
-              lastLongitude: userLng,
-              statusAbsen: tipeAbsen
-            };
-
-            if (tipeAbsen === 'MASUK') {
-              updatePayload.lastMasuk = sekarang;
-              updatePayload.totalHadir = firebase.firestore.FieldValue.increment(1);
-            } else {
-              updatePayload.lastPulang = sekarang;
-            }
-
-            await db.collection('karyawan').doc(karyawanAktif.docId).update(updatePayload);
-
-            await db.collection('log_absensi').add({
-              karyawanId: karyawanAktif.docId,
-              nama: karyawanAktif.nama,
-              jabatan: karyawanAktif.jabatan,
-              tipe: tipeAbsen,
-              latitude: userLat,
-              longitude: userLng,
-              jarakMeter: jarakAktual,
-              waktu: sekarang
-            });
-
-            const teksTanggal = sekarang.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            infoDiv.innerHTML = `✓ Absen ${tipeAbsen} Berhasil Pada ${teksTanggal} (${karyawanAktif.nama})`;
-            alert(`✅ Absen ${tipeAbsen} Berhasil!\n\nNama: ${karyawanAktif.nama}\nWaktu: ${teksTanggal}`);
-            
-            // Reset Tampilan
-            document.getElementById('inputKodeUnik').value = '';
-            document.getElementById('sec-kode-unik').style.display = 'block';
-            document.getElementById('sec-absen').style.display = 'none';
-            if (currentStream) currentStream.getTracks().forEach(track => track.stop());
-
-          } catch (err) { alert("Gagal update ke Firebase: " + err.message); }
-        }, (err) => {
-          infoDiv.innerHTML = "<span style='color:red;'>❌ Gagal mendapatkan lokasi GPS. Aktifkan izin GPS di Browser.</span>";
-        });
-      } else {
-        alert("Browser Anda tidak mendukung fitur Lokasi GPS.");
-      }
+    if (currentReports.length === 0) {
+      alert("Tidak ada data laporan untuk diekspor!");
+      return;
     }
 
-    function renderGrafik() {
-      if (chartPie) chartPie.destroy();
-      if (chartBar) chartBar.destroy();
-      const ctxPie = document.getElementById('pieChart').getContext('2d');
-      const ctxBar = document.getElementById('barChart').getContext('2d');
-      const labels = daftarKaryawan.map(k => k.nama);
-      const dataHadir = daftarKaryawan.map(k => k.totalHadir || 0);
+    let exportData = currentReports.map((r, index) => ({
+      "No": index + 1,
+      "Tanggal": r.date || "-",
+      "Pekerja": r.worker || "-",
+      "Judul Pekerjaan": r.title || "-",
+      "Penjelasan Pekerjaan": r.desc || "-"
+    }));
 
-      chartPie = new Chart(ctxPie, {
-        type: 'pie',
-        data: { labels, datasets: [{ data: dataHadir, backgroundColor: ['#1976d2', '#0288d1', '#2e7d32', '#f57c00', '#616161', '#8e44ad', '#e74c3c'] }] }
-      });
-      chartBar = new Chart(ctxBar, {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Hari Hadir', data: dataHadir, backgroundColor: '#1976d2' }] },
-        options: { scales: { y: { beginAtZero: true } } }
-      });
+    try {
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      
+      ws['!cols'] = [
+        { wch: 5 },  // No
+        { wch: 20 }, // Tanggal
+        { wch: 20 }, // Pekerja
+        { wch: 30 }, // Judul
+        { wch: 45 }  // Penjelasan
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Laporan CS & OB");
+      XLSX.writeFile(wb, "Laporan_Kebersihan_ElHajj.xlsx");
+    } catch (err) {
+      console.error("Gagal melakukan ekspor Excel:", err);
+      alert("Gagal melakukan ekspor Excel.");
     }
-
-    window.onload = function() {
-      updateClock();
-      initFaceAI();
-      muatDataFirebase();
-    };
-  </script>
+  }
+</script>
 </body>
 </html>
